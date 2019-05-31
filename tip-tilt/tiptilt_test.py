@@ -2,6 +2,7 @@ from tiptilt import TipTilt
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+import sys
 
 def animate_tiptilt(x, y, dt=1e-3):
     fig, ax = plt.subplots(figsize=(5,5))
@@ -59,17 +60,36 @@ def filter_tiptilt(N, total_time=0.1):
 
     # now let's filter
 
-    vibe_noise = 0.01
+    def vibe_noise(N):
+        #finds the expected value of vibrations.
+        N_vibrations = N
 
-    filter = TipTilt(vibe_noise, measurement_noise_single_axis)
-    #filter.R = filter.R / 500 # measurement noise model: make this larger and you trust the dynamic model more.
+        dx = np.zeros(10000)
+        dy = np.zeros(10000)
+        i = 0
+
+        for t in np.arange(0, 10, 1e-3):
+            vib_freqs    = np.random.uniform(low=10.0, high=1000.0, size=N_vibrations)  # Hz
+            vib_amps     = np.random.uniform(low=0.1, high=1, size=N_vibrations) # milliarcseconds
+            vib_phase    = np.random.uniform(low=0.0, high=2*np.pi, size=N_vibrations)  # radians
+            vib_pa       = np.random.uniform(low=0.0, high=2*np.pi, size=N_vibrations)  # radians
+            dx[i] = sum([-vib_amps[j] * np.sin(vib_phase[j]) * np.sin(vib_freqs[j] * t - vib_phase[j]) for j in range(N_vibrations)])
+            dy[i] = sum([vib_amps[j] * np.cos(vib_phase[j]) * np.sin(vib_freqs[j] * t - vib_phase[j]) for j in range(N_vibrations)])
+            i += 1
+
+        return np.mean(dx**2) + np.mean(dy**2)
+
+    vN = vibe_noise(N)
+    print("Expected vibe error: " + str(np.sqrt(vN)) + " mas")
+    print("Expected measurement error: " + str(measurement_noise_single_axis) + " mas")
+    filter = TipTilt(vN, measurement_noise_single_axis**2)
 
     times, states, inputs = filter.simulate(dt=1.0/freq, timeout=total_time, kalman=(np.arange(0, total_time, 1.0/freq), noisy_positions))
 
     # fake, just to see what'll happen
 
-    true_positions = np.vstack((np.array([0, 0]), true_positions))[:100]
-    noisy_positions = np.vstack((np.array([0, 0]), noisy_positions))[:100]
+    '''true_positions = np.vstack((np.array([0, 0]), true_positions))[:100]
+    noisy_positions = np.vstack((np.array([0, 0]), noisy_positions))[:100]'''
 
     res_x = states[0] - true_positions[::,0]
     res_y = states[1] - true_positions[::,1]
@@ -119,9 +139,20 @@ def filter_tiptilt(N, total_time=0.1):
     animate(len(res_x_noise)-1)
     plt.savefig("tiptilt"+str(N)+".svg", format='svg')
 
-    print("Measurement residual SD, x: " + str(np.std(res_x_noise)))
-    print("Measurement residual SD, y: " + str(np.std(res_y_noise)))
-    print("Filtered residual SD, x: " + str(np.std(res_x)))
-    print("Filtered residual SD, y: " + str(np.std(res_y)))
+    noise_x_sd = np.std(res_x_noise)
+    noise_y_sd = np.std(res_y_noise)
+    filter_x_sd = np.std(res_x)
+    filter_y_sd = np.std(res_y)
 
-filter_tiptilt(20) # some vibe
+    noise_sd = np.sqrt(noise_x_sd**2 + noise_y_sd**2)
+    filter_sd = np.sqrt(filter_x_sd**2 + filter_y_sd**2)
+
+    improvement = noise_sd - filter_sd
+
+    #print("Measurement residual SD, x: " + str(noise_x_sd))
+    #print("Measurement residual SD, y: " + str(noise_y_sd))
+    #print("Filtered residual SD, x: " + str(filter_x_sd))
+    #print("Filtered residual SD, y: " + str(filter_y_sd))
+    print("Net percentage improvement: " + str(100 * improvement/noise_sd))
+
+filter_tiptilt(int(sys.argv[1])) # some vibe

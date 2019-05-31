@@ -22,7 +22,8 @@ class TipTilt(DynamicSystem):
         return (A, B)
 
     def ext_input(self, t):
-        return (-self.state, "negative state")
+        k = 1
+        return (-k*self.state, "negative state")
 
     def reset(self):
         self.state = np.array([0, 0])
