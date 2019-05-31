@@ -8,13 +8,13 @@ class TipTilt(DynamicSystem):
     STATE_SIZE = 2
     INPUT_SIZE = 2
 
-    def __init__(self, d=0.01):
+    def __init__(self, vibe_noise, measurement_noise):
         self.state = np.array([0, 0])
         self.simend = False
         self.P = np.zeros((2, 2))
-        self.Q = np.array([[d, d**2/2], [d**2/2, d]]) # noise model to be updated
+        self.Q = vibe_noise * np.identity(2) # noise model to be updated
         self.H = np.identity(2)
-        self.R = np.array([[d, d**2/2], [d**2/2, d]]) # noise model to be updated
+        self.R = measurement_noise * np.identity(2) # noise model to be updated
 
     def evolve(self, t, dt):
         A = np.identity(2)
