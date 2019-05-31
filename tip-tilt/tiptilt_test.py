@@ -34,13 +34,32 @@ def make_vibe(N_vibrations, freq, total_time):
     true_positions = np.zeros((len(time_steps),2))
 
     for i in range(N_vibrations):
-        y_init_of_t = vib_amps[i] * np.sin(vib_freqs[i] * time_steps - vib_phase[i])
+        y_init_of_t = vib_amps[i] * np.sin(vib_freqs[i] * (time_steps - vib_phase[i]))
         x_init_of_t = np.zeros(len(time_steps))
         positions_init = np.vstack((x_init_of_t, y_init_of_t))
         rotated_positions = np.dot(rotation_matrix(vib_pa[i]) , positions_init)
         true_positions = true_positions + np.transpose(rotated_positions)
 
     return 1000 * true_positions
+
+def vibe_noise(N):
+    #finds the expected value of vibrations.
+    N_vibrations = N
+
+    dx = np.zeros(10000)
+    dy = np.zeros(10000)
+    i = 0
+
+    for t in np.arange(0, 10, 1e-3):
+        vib_freqs    = np.random.uniform(low=10.0, high=1000.0, size=N_vibrations)  # Hz
+        vib_amps     = np.random.uniform(low=0.1, high=1, size=N_vibrations) # milliarcseconds
+        vib_phase    = np.random.uniform(low=0.0, high=2*np.pi, size=N_vibrations)  # radians
+        vib_pa       = np.random.uniform(low=0.0, high=2*np.pi, size=N_vibrations)  # radians
+        dx[i] = sum([-vib_amps[j] * np.sin(vib_phase[j]) * np.sin(vib_freqs[j] * t - vib_phase[j]) for j in range(N_vibrations)])
+        dy[i] = sum([vib_amps[j] * np.cos(vib_phase[j]) * np.sin(vib_freqs[j] * t - vib_phase[j]) for j in range(N_vibrations)])
+        i += 1
+
+    return np.mean(dx**2) + np.mean(dy**2)
 
 def filter_tiptilt(N, total_time=0.1):
     zeropoint = 2.82e9 # photons/s/m2, Cedric's H-band zeropoint
@@ -52,6 +71,7 @@ def filter_tiptilt(N, total_time=0.1):
     freq = 1000.0 # tip/tilt loop speed, Hz
 
     true_positions = make_vibe(N, freq, total_time)
+    #true_positions = np.random.normal(0, vibe_noise(N), (int(freq * total_time), 2))
 
     photons_per_measurement = zeropoint * 10**(-0.4*Hmag) * (1.0/freq) * (np.pi * (diameter/2)**2) * throughput
     measurement_noise_single_axis = wavelength/(np.pi * diameter * np.sqrt(photons_per_measurement)) * 206265000 # milliarcseconds
@@ -60,36 +80,23 @@ def filter_tiptilt(N, total_time=0.1):
 
     # now let's filter
 
-    def vibe_noise(N):
-        #finds the expected value of vibrations.
-        N_vibrations = N
-
-        dx = np.zeros(10000)
-        dy = np.zeros(10000)
-        i = 0
-
-        for t in np.arange(0, 10, 1e-3):
-            vib_freqs    = np.random.uniform(low=10.0, high=1000.0, size=N_vibrations)  # Hz
-            vib_amps     = np.random.uniform(low=0.1, high=1, size=N_vibrations) # milliarcseconds
-            vib_phase    = np.random.uniform(low=0.0, high=2*np.pi, size=N_vibrations)  # radians
-            vib_pa       = np.random.uniform(low=0.0, high=2*np.pi, size=N_vibrations)  # radians
-            dx[i] = sum([-vib_amps[j] * np.sin(vib_phase[j]) * np.sin(vib_freqs[j] * t - vib_phase[j]) for j in range(N_vibrations)])
-            dy[i] = sum([vib_amps[j] * np.cos(vib_phase[j]) * np.sin(vib_freqs[j] * t - vib_phase[j]) for j in range(N_vibrations)])
-            i += 1
-
-        return np.mean(dx**2) + np.mean(dy**2)
-
     vN = vibe_noise(N)
     print("Expected vibe error: " + str(np.sqrt(vN)) + " mas")
     print("Expected measurement error: " + str(measurement_noise_single_axis) + " mas")
     filter = TipTilt(vN, measurement_noise_single_axis**2)
 
-    times, states, inputs = filter.simulate(dt=1.0/freq, timeout=total_time, kalman=(np.arange(0, total_time, 1.0/freq), noisy_positions))
+    #times, states, inputs = filter.simulate(dt=1.0/freq, timeout=total_time, kalman=(np.arange(0, total_time, 1.0/freq), noisy_positions))
+    states = np.zeros(true_positions.shape)
+    dt = 1.0/freq
+    times = np.arange(0, total_time, dt)
+    i = 0
+    for t in times:
+        _, _, state_pred, P_pred = filter.predict(t, dt)
+        filter.state, filter.P = filter.update(state_pred, P_pred, noisy_positions[i])
+        states[i] = filter.state
+        i += 1
 
-    # fake, just to see what'll happen
-
-    '''true_positions = np.vstack((np.array([0, 0]), true_positions))[:100]
-    noisy_positions = np.vstack((np.array([0, 0]), noisy_positions))[:100]'''
+    states = states.T #jank
 
     res_x = states[0] - true_positions[::,0]
     res_y = states[1] - true_positions[::,1]
@@ -101,9 +108,10 @@ def filter_tiptilt(N, total_time=0.1):
 
     def make_tiptilt_fig():
         fig, (ax1, ax2) = plt.subplots(2,1,figsize=(5,9))
-        limit = np.max(np.abs(noisy_positions))
-        ax1.set(xlim=(-limit, limit), ylim=(-limit, limit))
-        ax2.set(xlim=(-limit, limit), ylim=(-limit, limit))
+        limit_pos = np.max(np.abs(noisy_positions))
+        ax1.set(xlim=(-limit_pos, limit_pos), ylim=(-limit_pos, limit_pos))
+        limit_err = max([np.max(np.abs(res_x)), np.max(np.abs(res_y)), np.max(np.abs(res_x_noise)), np.max(np.abs(res_y_noise))])
+        ax2.set(xlim=(-limit_err, limit_err), ylim=(-limit_err, limit_err))
         plt.xlabel('X position [mas]',fontsize=14)
         plt.ylabel('Y position [mas]',fontsize=14)
         plt.title("Tip-Tilt Filtering, vibration N = " + str(N))
@@ -156,3 +164,13 @@ def filter_tiptilt(N, total_time=0.1):
     print("Net percentage improvement: " + str(100 * improvement/noise_sd))
 
 filter_tiptilt(int(sys.argv[1])) # some vibe
+
+def show_truth():
+    true_positions = make_vibe(20, 1000, 1)
+    plt.close("all")
+    plt.figure(figsize=(5,5))
+    plt.plot(true_positions[0:100,0], true_positions[0:100,1], 'go-', label='True Positions')
+    plt.xlabel('X position [mas]',fontsize=14)
+    plt.ylabel('Y position [mas]',fontsize=14)
+    plt.legend()
+    plt.show()
