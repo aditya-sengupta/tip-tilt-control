@@ -59,7 +59,7 @@ def filter_tiptilt(N, total_time=0.1):
 
     # now let's filter
 
-    vibe_noise = 0.1
+    vibe_noise = 0.01
 
     filter = TipTilt(vibe_noise, measurement_noise_single_axis)
     #filter.R = filter.R / 500 # measurement noise model: make this larger and you trust the dynamic model more.
