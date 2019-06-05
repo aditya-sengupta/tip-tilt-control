@@ -43,7 +43,7 @@ def make_vibe(N_vibrations, freq, total_time):
         rotated_positions = np.dot(rotation_matrix(vib_pa[i]) , positions_init)
         true_positions = true_positions + np.transpose(rotated_positions)
 
-    return true_positions
+    return true_positions, vib_freqs, vib_amps, vib_pa
 
 def vibe_noise(N):
     #finds the expected value of vibrations.
@@ -180,10 +180,10 @@ def show_truth():
     plt.show()
 
 def test_reconstruction():
-    true_positions = make_vibe(20, 1000, 1)
+    true_positions, vib_freqs, vib_amps, vib_pa = make_vibe(5, 1000, 10)
     dx = true_positions[:,0]
     dy = true_positions[:,1]
     telescope = TipTilt(0.06, dx, dy)
-    telescope.id_vibe()
+    telescope.id_vibe(vib_freqs, vib_amps, vib_pa)
 
 test_reconstruction()

@@ -22,24 +22,46 @@ class TipTilt(DynamicSystem):
         self.H = np.identity(2)
         self.R = measurement_noise * np.identity(2) # noise model to be updated maybe
 
-    def id_vibe(self):
+    def id_vibe(self, applied_freqs=None, applied_amps=None, applied_pa=None):
         # finds the state-transition matrix A from sample dx and dy data
-        freqs, dx_psd = signal.welch(self.dx, self.sampling_freq)
-        _, dy_psd = signal.welch(self.dy, self.sampling_freq)
-        freqs = freqs*2*np.pi # dunno why this apparently returns rad/s not Hz
-        # I'm pretty sure freqs should be the same for both calls to welch because dx has the same dimensions as dy, and the sampling frequency is the same.
-        ind = signal.find_peaks(dx_psd)[0].tolist() # should be the same for dx and dy again
-        mode_freqs = freqs[ind]
-        mode_amps_x = 4*np.sqrt(dx_psd[ind])
-        mode_amps_y = 4*np.sqrt(dy_psd[ind])
+        # applied_ is in there for debug.
+        # FFT
+
+        dt = 1/self.sampling_freq
+        mode_amps_x = np.fft.fft(self.dx)[:self.dx.size//2] * dt / 2.5
+        mode_amps_y = np.fft.fft(self.dy)[:self.dy.size//2] * dt / 2.5
+
+        ind = signal.find_peaks(mode_amps_x)[0][:5]
+        maxes = np.abs(mode_amps_x[ind])
+        print(maxes / applied_amps)
+        freqs = np.fft.fftfreq(self.dx.size, dt)[:self.dx.size//2] * 2 * np.pi
+
+        plt.subplot(2,2,1)
+        plt.plot(freqs, np.abs(mode_amps_x))
+        plt.xlim(0, 500)
+        if applied_freqs is not None:
+            plt.scatter(applied_freqs, applied_amps * np.abs(np.sin(applied_pa)), color='g')
+        plt.xlabel("Frequency (Hz)")
+        plt.ylabel("Amplitude (mas)")
+        plt.title("Fourier transform of x deviations")
+
+        plt.subplot(2,2,2)
+
+        plt.plot(freqs, np.abs(mode_amps_y))
+        if applied_freqs is not None:
+            plt.scatter(applied_freqs, applied_amps * np.abs(np.cos(applied_pa)), color='g')
+        plt.xlim(0, 500)
+        plt.xlabel("Frequency (Hz)")
+        plt.ylabel("Amplitude (mas)")
+        plt.title("Fourier transform of y deviations")
 
         # now this should match up to dx/dy data
 
         t = np.arange(0, self.dx.size/self.sampling_freq, 1/self.sampling_freq)
-        reconstructed_dx = sum([amp * np.sin(2*np.pi*freq*t) for amp, freq in zip(mode_amps_x, mode_freqs)])
-        reconstructed_dy = sum([-amp * np.cos(2*np.pi*freq*t) for amp, freq in zip(mode_amps_y, mode_freqs)])
+        reconstructed_dx = sum([amp * np.sin(2*np.pi*freq*t) for amp, freq in zip(mode_amps_x, freqs)])
+        reconstructed_dy = sum([amp * np.sin(2*np.pi*freq*t) for amp, freq in zip(mode_amps_y, freqs)])
 
-        plt.subplot(2,2,1)
+        plt.subplot(2,2,3)
         plt.plot(t, reconstructed_dx, label='reconstructed')
         plt.plot(t, self.dx, label='original')
         plt.xlabel("Time (s)")
@@ -50,7 +72,7 @@ class TipTilt(DynamicSystem):
         #print("SD of x deviations: " + str(np.std(self.dx)))
         #print("SD of x residual: " + str(np.std(self.dx - reconstructed_dx)))
 
-        plt.subplot(2,2,2)
+        plt.subplot(2,2,4)
         plt.plot(t, reconstructed_dy, label='reconstructed')
         plt.plot(t, self.dy, label='original')
         plt.xlabel("Time (s)")
