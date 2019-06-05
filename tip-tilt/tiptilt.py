@@ -28,17 +28,13 @@ class TipTilt(DynamicSystem):
         # FFT
 
         dt = 1/self.sampling_freq
-        mode_amps_x = np.fft.fft(self.dx)[:self.dx.size//2] * dt / 2.5
-        mode_amps_y = np.fft.fft(self.dy)[:self.dy.size//2] * dt / 2.5
+        mode_amps_x = np.fft.fft(self.dx) * dt
+        mode_amps_y = np.fft.fft(self.dy) * dt
 
-        ind = signal.find_peaks(mode_amps_x)[0][:5]
-        maxes = np.abs(mode_amps_x[ind])
-        print(maxes / applied_amps)
-        freqs = np.fft.fftfreq(self.dx.size, dt)[:self.dx.size//2] * 2 * np.pi
+        freqs = np.fft.fftfreq(self.dx.size, dt)
 
         plt.subplot(2,2,1)
         plt.plot(freqs, np.abs(mode_amps_x))
-        plt.xlim(0, 500)
         if applied_freqs is not None:
             plt.scatter(applied_freqs, applied_amps * np.abs(np.sin(applied_pa)), color='g')
         plt.xlabel("Frequency (Hz)")
@@ -50,20 +46,19 @@ class TipTilt(DynamicSystem):
         plt.plot(freqs, np.abs(mode_amps_y))
         if applied_freqs is not None:
             plt.scatter(applied_freqs, applied_amps * np.abs(np.cos(applied_pa)), color='g')
-        plt.xlim(0, 500)
         plt.xlabel("Frequency (Hz)")
         plt.ylabel("Amplitude (mas)")
         plt.title("Fourier transform of y deviations")
 
         # now this should match up to dx/dy data
-
         t = np.arange(0, self.dx.size/self.sampling_freq, 1/self.sampling_freq)
-        reconstructed_dx = sum([amp * np.sin(2*np.pi*freq*t) for amp, freq in zip(mode_amps_x, freqs)])
-        reconstructed_dy = sum([amp * np.sin(2*np.pi*freq*t) for amp, freq in zip(mode_amps_y, freqs)])
+        reconstructed_dx = sum([np.abs(amp * np.exp(2j*np.pi*freq*t)) for amp, freq in zip(np.abs(mode_amps_x), freqs)])
+        reconstructed_dy = sum([np.abs(amp * np.exp(2j*np.pi*freq*t)) for amp, freq in zip(np.abs(mode_amps_y), freqs)])
 
         plt.subplot(2,2,3)
-        plt.plot(t, reconstructed_dx, label='reconstructed')
         plt.plot(t, self.dx, label='original')
+        plt.plot(t, reconstructed_dx, label='reconstructed')
+        #plt.plot(t, reconstructed_dx - self.dx, label='residual')
         plt.xlabel("Time (s)")
         plt.ylabel("Deviation (mas)")
         plt.legend()
@@ -73,13 +68,13 @@ class TipTilt(DynamicSystem):
         #print("SD of x residual: " + str(np.std(self.dx - reconstructed_dx)))
 
         plt.subplot(2,2,4)
-        plt.plot(t, reconstructed_dy, label='reconstructed')
         plt.plot(t, self.dy, label='original')
+        plt.plot(t, reconstructed_dy, label='reconstructed')
+        #plt.plot(t, reconstructed_dy - self.dy, label='residual')
         plt.xlabel("Time (s)")
         plt.ylabel("Deviation (mas)")
         plt.legend()
         plt.title("Reconstructed and original y deviations")
-
         plt.show()
 
         #print("SD of y deviations: " + str(np.std(self.dy)))
