@@ -25,22 +25,25 @@ def make_vibe(N_vibrations, freq, total_time):
         c, s = np.cos(theta), np.sin(theta)
         return np.array(((c,-s), (s, c)))
 
-    vib_freqs    = np.random.uniform(low=10.0, high=1000.0, size=N_vibrations)  # Hz
-    vib_amps     = np.random.uniform(low=0.0001, high=0.001, size=N_vibrations) # arcseconds
-    vib_phase    = np.random.uniform(low=0.0, high=2*np.pi, size=N_vibrations)  # radians
+    vib_freqs    = np.random.uniform(low=10.0, high=500.0, size=N_vibrations)  # Hz
+    # changed to 500 because Nyquist
+    vib_amps     = np.random.uniform(low=0.1, high=1, size=N_vibrations) # milliarcseconds
+    #vib_phase    = np.random.uniform(low=0.0, high=2*np.pi, size=N_vibrations)  # radians
+    vib_phase    = np.zeros(N_vibrations)
     vib_pa       = np.random.uniform(low=0.0, high=2*np.pi, size=N_vibrations)  # radians
+
 
     time_steps = np.arange(0, total_time, 1.0/freq)
     true_positions = np.zeros((len(time_steps),2))
 
     for i in range(N_vibrations):
-        y_init_of_t = vib_amps[i] * np.sin(vib_freqs[i] * (time_steps - vib_phase[i]))
+        y_init_of_t = vib_amps[i] * np.sin(vib_freqs[i] * time_steps - vib_phase[i])
         x_init_of_t = np.zeros(len(time_steps))
         positions_init = np.vstack((x_init_of_t, y_init_of_t))
         rotated_positions = np.dot(rotation_matrix(vib_pa[i]) , positions_init)
         true_positions = true_positions + np.transpose(rotated_positions)
 
-    return 1000 * true_positions
+    return true_positions
 
 def vibe_noise(N):
     #finds the expected value of vibrations.
@@ -55,8 +58,8 @@ def vibe_noise(N):
         vib_amps     = np.random.uniform(low=0.1, high=1, size=N_vibrations) # milliarcseconds
         vib_phase    = np.random.uniform(low=0.0, high=2*np.pi, size=N_vibrations)  # radians
         vib_pa       = np.random.uniform(low=0.0, high=2*np.pi, size=N_vibrations)  # radians
-        dx[i] = sum([-vib_amps[j] * np.sin(vib_phase[j]) * np.sin(vib_freqs[j] * t - vib_phase[j]) for j in range(N_vibrations)])
-        dy[i] = sum([vib_amps[j] * np.cos(vib_phase[j]) * np.sin(vib_freqs[j] * t - vib_phase[j]) for j in range(N_vibrations)])
+        dx[i] = sum([-vib_amps[j] * np.sin(vib_pa[j]) * np.sin(vib_freqs[j] * t - vib_phase[j]) for j in range(N_vibrations)])
+        dy[i] = sum([vib_amps[j] * np.cos(vib_pa[j]) * np.sin(vib_freqs[j] * t - vib_phase[j]) for j in range(N_vibrations)])
         i += 1
 
     return np.mean(dx**2) + np.mean(dy**2)
@@ -71,6 +74,7 @@ def filter_tiptilt(N, total_time=0.1):
     freq = 1000.0 # tip/tilt loop speed, Hz
 
     true_positions = make_vibe(N, freq, total_time)
+
     #true_positions = np.random.normal(0, vibe_noise(N), (int(freq * total_time), 2))
 
     photons_per_measurement = zeropoint * 10**(-0.4*Hmag) * (1.0/freq) * (np.pi * (diameter/2)**2) * throughput
@@ -145,7 +149,7 @@ def filter_tiptilt(N, total_time=0.1):
 
     fig, ax1, ax2, true_pos, noisy_pos, filtered_pos, res_noise, res_filt = make_tiptilt_fig()
     animate(len(res_x_noise)-1)
-    plt.savefig("tiptilt"+str(N)+".svg", format='svg')
+    plt.savefig("tiptilt"+str(N)+".png", format='png')
 
     noise_x_sd = np.std(res_x_noise)
     noise_y_sd = np.std(res_y_noise)
@@ -163,7 +167,7 @@ def filter_tiptilt(N, total_time=0.1):
     #print("Filtered residual SD, y: " + str(filter_y_sd))
     print("Net percentage improvement: " + str(100 * improvement/noise_sd))
 
-filter_tiptilt(int(sys.argv[1])) # some vibe
+# filter_tiptilt(int(sys.argv[1])) # some vibe
 
 def show_truth():
     true_positions = make_vibe(20, 1000, 1)
@@ -174,3 +178,12 @@ def show_truth():
     plt.ylabel('Y position [mas]',fontsize=14)
     plt.legend()
     plt.show()
+
+def test_reconstruction():
+    true_positions = make_vibe(20, 1000, 1)
+    dx = true_positions[:,0]
+    dy = true_positions[:,1]
+    telescope = TipTilt(0.06, dx, dy)
+    telescope.id_vibe()
+
+test_reconstruction()
