@@ -1,0 +1,40 @@
+\documentclass[twocolumn]{article}
+
+\title{Developing Predictive Wavefront Control at Keck II: \\Kalman Filtering for Tip-Tilt Correction}
+\author{Aditya Sengupta}
+
+\begin{document}
+	\maketitle
+	\section*{Abstract}
+
+	\section{Tip-Tilt Correction}
+
+	The tip and tilt modes of optical aberrations are the 
+
+	\section{The Kalman Filter}
+
+	Kalman filtering is a method to obtain the optimal linear state estimate of a dynamic system. It combines a physical estimate of the system state with noisy measurements that are linear in the state to obtain the state estimate having the minimum mean-squared error at any given time.
+
+	Consider a discrete-time dynamic system with a state-transition rule
+
+	\begin{align}
+		\vec{x}[k + 1] = A[k]\vec{x}[k] + \vec{w}[k]
+	\end{align}
+
+	with $w[k]$ white noise. The impact of the white noise on the state prediction can be captured in a state covariance matrix $P$, with state-transition rule
+
+	\begin{align}
+		P[k + 1] = A[k]P[k]A[k]^T + Q[k]
+	\end{align}
+
+	where $Q[k]$ is a matrix describing the process noise. Suppose 
+
+	\section{System Identification}
+
+	\lipsum[2]
+
+	\section{Dual Kalman-Filter Fitting}
+
+	\lipsum[3]
+
+\end{document}
