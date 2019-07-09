@@ -7,7 +7,7 @@ import copy
 import itertools
 
 # global parameter definitions
-f_sampling = 1000  # Hz
+f_sampling = 100  # Hz
 f_1 = f_sampling / 60  # lowest possible frequency of a vibration mode
 f_2 = f_sampling / 3  # highest possible frequency of a vibration mode
 f_w = f_sampling / 3  # frequency above which measurement noise dominates
@@ -104,13 +104,13 @@ def atmosphere_fit(psd):
 
 def damped_harmonic(pars_model):
     A, f, k, p = pars_model
-    return A * np.exp(-k * 2 * np.pi * f * times) * np.sin(2 * np.pi * f * times - p)
+    return A * np.exp(-k * 2 * np.pi * f * times) * np.exp(2j * np.pi * f * times - p).real
 
 
 def damped_derivative(pars_model):
     # utility: returns derivative of damped_harmonic evaluated at time 0
     A, f, k, p = pars_model
-    return A * 2 * np.pi * f * (k * np.sin(p) + np.cos(p))
+    return A * 2 * np.pi * f * (np.sin(p) - k  * np.cos(p))
 
 
 def make_psd(pars_model):
