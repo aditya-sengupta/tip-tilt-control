@@ -1,3 +1,6 @@
 [submodule "tip-tilt/dynamics"]
 	path = tip-tilt/dynamics
 	url = git://github.com/aditya-sengupta/dynamics
+[submodule "tip-tilt/hcipy"]
+	path = tip-tilt/hcipy
+	url = https://github.com/ehpor/hcipy
