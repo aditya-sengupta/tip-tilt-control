@@ -4,14 +4,12 @@ from matplotlib import pyplot as plt
 import sys
 
 def test_quality0(process_noise=0.12, measurement_noise=0.06):
-    N_vib_app = 1
-
     vib_freqs = np.random.uniform(low=50, high=350, size=N_vib_app)  # Hz
     vib_amps = np.random.uniform(low=0.1, high=1, size=N_vib_app)  # milliarcseconds
     vib_phase = np.random.uniform(low=0.0, high=2 * np.pi, size=N_vib_app)  # radians
     vib_damping = np.random.uniform(low=1e-5, high=1e-4, size=N_vib_app)  # unitless
 
-    truth = sum([vib_amps[i] * np.exp(1j * 2 * np.pi * vib_freqs[i] * times - vib_phase[i]).real
+    truth = sum([vib_amps[i] * np.cos(2 * np.pi * vib_freqs[i] * times - vib_phase[i])
                     * np.exp(-2 * np.pi * vib_damping[i] * vib_freqs[i] * times) for i in range(N_vib_app)])
 
     measurements = make_noisy_data(truth, 0)
@@ -48,7 +46,14 @@ def test_quality1(phy_noise=0.12):
     phy_freqs = np.round(vib_freqs)
     variances = np.array([phy_noise ** 2] * N_vib_app)
     params = np.vstack((vib_amps, phy_freqs, vib_damping, vib_phase)).T
-    return np.sqrt(np.mean((kfilter(make_kfilter(params, variances), measurements) - truth)**2))
+    physics = sum(damped_harmonic(p) for p in params)
+    filtered = kfilter(make_kfilter(params, variances), measurements)
+    plt.plot(times, measurements, label='Measurements')
+    plt.plot(times, physics, label='Physics')
+    plt.plot(times, filtered, label='Filtered')
+    plt.legend()
+    plt.show()
+    return np.sqrt(np.mean(filtered - truth)**2)
 
 def test_quality2(phy_noise=0.12):
     while True:
@@ -78,4 +83,4 @@ def test_quality2(phy_noise=0.12):
             return
 
 if __name__ == '__main__':
-    globals()[sys.argv[1]](float(sys.argv[2]), float(sys.argv[3]))
+    print(globals()[sys.argv[1]]())

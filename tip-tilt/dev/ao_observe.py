@@ -29,7 +29,7 @@ def make_vibe_data():
     vib_phase = np.random.uniform(low=0.0, high=2 * np.pi, size=N_vib_app)  # radians
     vib_damping = np.random.uniform(low=1e-5, high=1e-2, size=N_vib_app)  # unitless
 
-    pos = sum([vib_amps[i] * np.exp(1j * 2 * np.pi * vib_freqs[i] * times - vib_phase[i]).real
+    pos = sum([vib_amps[i] * np.cos(2 * np.pi * vib_freqs[i] * times - vib_phase[i])
                * np.exp(-2 * np.pi * vib_damping[i] * vib_freqs[i] * times) for i in range(N_vib_app)])
     # cos is real of e^ix; sin vs cos doesn't really matter because phase is random anyway
 
@@ -104,7 +104,7 @@ def atmosphere_fit(psd):
 
 def damped_harmonic(pars_model):
     A, f, k, p = pars_model
-    return A * np.exp(-k * 2 * np.pi * f * times) * np.exp(2j * np.pi * f * times - p).real
+    return A * np.exp(-k * 2 * np.pi * f * times) * np.cos(2 * np.pi * f * times - p)
 
 
 def damped_derivative(pars_model):
@@ -329,9 +329,12 @@ def kfilter(args, measurements):
     state, A, P, Q, H, R = args
     k = 0
     pos_r = np.zeros(int(f_sampling * time_id))
-    while k < time_id * f_sampling:
+    while True:
         pos_r[k] = H.dot(state)
         state, P = predict(A, P, Q, state)
-        state, P = update(H, P, R, state, measurements[k])
         k += 1
+        if k < int(time_id * f_sampling):
+            state, P = update(H, P, R, state, measurements[k])
+        else:
+            break
     return pos_r
