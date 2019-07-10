@@ -71,12 +71,32 @@ def test_quality2(phy_noise=0.12):
         params = np.vstack((vib_amps, phy_freqs, vib_damping, vib_phase)).T
         state, A, P, _, H, R = make_kfilter(params, variances)
         Q = np.random.normal(loc=0, scale=phy_noise, size=(2*N_vib_app, 2*N_vib_app))
-
         error = np.mean(kfilter((state, A, P, Q, H, R), measurements) - truth)
         print(np.mean(np.diag(Q)))
         if error > 1000:
             print(error)
             return
 
+def test_sysid_freq(disp=True):
+    truth = make_vibe_data(1)
+    measurements = make_noisy_data(truth)
+    params, variances = vibe_fit_freq(get_psd(measurements))
+    filtered = kfilter(make_kfilter(params, variances), measurements)
+    if disp:
+        plt.plot(times, truth, label='Truth')
+        plt.plot(times, filtered, label='Filtered')
+        plt.legend()
+        plt.show()
+    return np.sqrt(np.mean((filtered - truth)**2))
+
+def test_time_fit(disp=True, N=1):
+    truth = make_vibe_data(N)
+    measurements = make_noisy_data(truth)
+    coeffs = reconstruct_modes(measurements, N)
+    plt.plot(times, measurements, label='Measurements')
+    plt.plot(times, sum(np.exp(coeffs[i] * times).real for i in range(N)), label='Reconstructed')
+    plt.legend()
+    plt.show()
+
 if __name__ == '__main__':
-    print(globals()[sys.argv[1]]())
+    globals()[sys.argv[1]]()

@@ -7,7 +7,7 @@ import copy
 import itertools
 
 # global parameter definitions
-f_sampling = 100  # Hz
+f_sampling = 1000  # Hz
 f_1 = f_sampling / 60  # lowest possible frequency of a vibration mode
 f_2 = f_sampling / 3  # highest possible frequency of a vibration mode
 f_w = f_sampling / 3  # frequency above which measurement noise dominates
@@ -20,7 +20,7 @@ times = np.arange(0, time_id, 1 / f_sampling)  # array of times to operate on
 freqs = np.linspace(0, f_sampling // 2, f_sampling // 2 + 1)  # equivalent to signal.periodogram(...)[0]
 
 
-def make_vibe_data():
+def make_vibe_data(N_vib_app=N_vib_app):
     # takes in nothing (params are globally set in the 'global parameter definitions' cell)
     # returns a 1D np array with the same dimension as times.
     # note that we don't have access to the random parameters, just the output.
@@ -31,7 +31,6 @@ def make_vibe_data():
 
     pos = sum([vib_amps[i] * np.cos(2 * np.pi * vib_freqs[i] * times - vib_phase[i])
                * np.exp(-2 * np.pi * vib_damping[i] * vib_freqs[i] * times) for i in range(N_vib_app)])
-    # cos is real of e^ix; sin vs cos doesn't really matter because phase is random anyway
 
     return pos
 
@@ -179,7 +178,7 @@ def reconstruct_modes(signal, N):
 def vibe_fit_freq(psd):
     # takes in the frequency axis for a PSD, and the PSD.
     # returns a 4xN np array with fit parameters, and a 1xN np array with variances.
-    par0 = [0.5, 1e-4, np.pi, 0.2]
+    par0 = [0.5, 1e-4, np.pi, 1]
     PARAMS_SIZE = len(par0)  # slightly misleading: std is in par0 and frequency isn't so it matches up.
 
     # peak detection by correlation
@@ -329,12 +328,8 @@ def kfilter(args, measurements):
     state, A, P, Q, H, R = args
     k = 0
     pos_r = np.zeros(int(f_sampling * time_id))
-    while True:
+    for k in range(int(time_id * f_sampling)):
+        state, P = update(H, P, R, state, measurements[k])
         pos_r[k] = H.dot(state)
         state, P = predict(A, P, Q, state)
-        k += 1
-        if k < int(time_id * f_sampling):
-            state, P = update(H, P, R, state, measurements[k])
-        else:
-            break
     return pos_r
