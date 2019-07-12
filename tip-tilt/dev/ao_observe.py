@@ -326,9 +326,9 @@ def make_kfilter(params, variances):
 
 def kfilter(args, measurements):
     state, A, P, Q, H, R = args
-    k = 0
-    pos_r = np.zeros(int(f_sampling * time_id))
-    for k in range(int(time_id * f_sampling)):
+    steps = int(f_sampling * time_id)
+    pos_r = np.zeros(steps)
+    for k in range(steps):
         state, P = update(H, P, R, state, measurements[k])
         pos_r[k] = H.dot(state)
         state, P = predict(A, P, Q, state)
