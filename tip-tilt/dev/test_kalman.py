@@ -76,7 +76,8 @@ def test_time_fit(disp=True, N=1):
     measurements = make_noisy_data(truth)
     coeffs = reconstruct_modes(measurements, N)
     plt.plot(times, measurements, label='Measurements')
-    plt.plot(times, sum(np.exp(coeffs[i] * times).real for i in range(N)), label='Reconstructed')
+    plt.plot(times, truth, label='Truth')
+    plt.plot(times, sum(np.exp(-coeffs[i] * times).real for i in range(N)), label='Reconstructed')
     plt.legend()
     plt.show()
 
