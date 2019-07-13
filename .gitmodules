@@ -1,4 +1,4 @@
 [submodule "control/hcipy"]
 	path = control/hcipy
 	url = https://github.com/ehpor/hcipy
-	ignore = dirty
+	ignore = untracked
