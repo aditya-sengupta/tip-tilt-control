@@ -11,8 +11,8 @@ f_sampling = 1000  # Hz
 f_1 = f_sampling / 60  # lowest possible frequency of a vibration mode
 f_2 = f_sampling / 3  # highest possible frequency of a vibration mode
 f_w = f_sampling / 3  # frequency above which measurement noise dominates
-N_vib_app = 10  # number of vibration modes being applied
-N_vib_max = 10  # number of vibration modes to be detected
+N_vib_app = 1  # number of vibration modes being applied
+N_vib_max = 1  # number of vibration modes to be detected
 energy_cutoff = 1e-8  # proportion of total energy after which PSD curve fit ends
 measurement_noise = 0.06  # milliarcseconds; pulled from previous notebook
 time_id = 1  # timescale over which sysid runs. Pulled from Meimon 2010's suggested 1 Hz sysid frequency.
@@ -24,6 +24,7 @@ def make_vibe_data(N_vib_app=N_vib_app):
     # takes in nothing (params are globally set in the 'global parameter definitions' cell)
     # returns a 1D np array with the same dimension as times.
     # note that we don't have access to the random parameters, just the output.
+    times = np.arange(0, time_id, 1 / f_sampling)
     vib_freqs = np.random.uniform(low=f_1, high=f_2, size=N_vib_app)  # Hz
     vib_amps = np.random.uniform(low=0.1, high=1, size=N_vib_app)  # milliarcseconds
     vib_phase = np.random.uniform(low=0.0, high=2 * np.pi, size=N_vib_app)  # radians
@@ -43,7 +44,7 @@ def make_atm_data():
     # takes in nothing (params are globally set in the 'global parameter definitions' cell)
     # returns a 1D np array with the same dimension as times
     # to be changed, clearly
-    return np.zeros(times.size)
+    return np.zeros(int(time_id * f_sampling))
 
 
 def get_psd(pos):
@@ -109,7 +110,7 @@ def damped_harmonic(pars_model):
 def damped_derivative(pars_model):
     # utility: returns derivative of damped_harmonic evaluated at time 0
     A, f, k, p = pars_model
-    return A * 2 * np.pi * f * (np.sin(p) - k  * np.cos(p))
+    return -A * 2 * np.pi * f * (-np.sin(p) + k  * np.cos(p))
 
 
 def make_psd(pars_model):
@@ -215,14 +216,6 @@ def vibe_fit_freq(psd):
     return params, variances
 
 
-def make_process_noise(variances):
-    STATE_SIZE = 2 * len(variances)
-    Q = np.zeros((STATE_SIZE, STATE_SIZE))
-    for i in range(variances.size):
-        Q[2 * i][2 * i] = variances[i]
-    return Q
-
-
 def make_state_transition(params):
     dt = 1 / f_sampling
     STATE_SIZE = 2 * params.shape[0]
@@ -259,10 +252,6 @@ def make_state_transition_time(alpha):
     return A
 
 
-def make_measurement_matrix(STATE_SIZE):
-    return np.array([[1, 0] * (STATE_SIZE // 2)])
-
-
 def simulate(params):
     A = make_state_transition(params)
     STATE_SIZE = 2 * params.shape[0]
@@ -272,29 +261,13 @@ def simulate(params):
         for i in range(STATE_SIZE // 2)])))
     k = 0
     pos_r = np.zeros(int(f_sampling * time_id))
-    H = make_measurement_matrix(STATE_SIZE)
+    H = np.array([[1, 0] * (STATE_SIZE // 2)])
     while k < time_id * f_sampling:
         pos_r[k] = H.dot(state)
         state = A.dot(state)
         k += 1
     return pos_r
 
-
-def simulate_time(alpha, params):
-    A = make_state_transition_time(alpha)
-    STATE_SIZE = 2 * params.shape[0]
-    state = np.array(list(itertools.chain.from_iterable([[
-        damped_harmonic(params[i])[0],
-        damped_derivative(params[i])]
-        for i in range(STATE_SIZE // 2)])))
-    k = 0
-    pos_r = np.zeros(int(f_sampling * time_id))
-    H = make_measurement_matrix(STATE_SIZE)
-    while k < time_id * f_sampling:
-        pos_r[k] = H.dot(state)
-        state = A.dot(state)
-        k += 1
-    return pos_r
 
 
 def predict(A, P, Q, state):
@@ -307,18 +280,36 @@ def update(H, P, R, state, measurement):
     return state + K.dot(error), P - K.dot(H.dot(P))
 
 
+def make_kf_state(params):
+    return np.array(list(itertools.chain.from_iterable(
+        [[
+            damped_harmonic(params[i])[0], 
+            damped_derivative(params[i])
+        ] for i in range(params.shape[0])]
+    )))
+
+def make_ekf_state(params):
+    return np.array(list(itertools.chain.from_iterable(
+        [[
+            damped_harmonic(params[i])[0], 
+            damped_derivative(params[i]),
+            -2 * np.pi * params[i][1] * params[i][2],
+            2 * np.pi * params[i][1] * np.sqrt(1 - params[i][2]**2)
+        ] for i in range(params.shape[0])]
+    )))
+
+
 def make_kfilter(params, variances):
     # takes in parameters and variances from which to make a physics simulation
     # and measurements to match it against.
     # returns state, A, P, Q, H, R for kfilter to run.
     A = make_state_transition(params)
     STATE_SIZE = 2 * params.shape[0]
-    state = np.array(list(itertools.chain.from_iterable([[
-        damped_harmonic(params[i])[0],
-        damped_derivative(params[i])]
-        for i in range(STATE_SIZE // 2)])))
-    H = make_measurement_matrix(STATE_SIZE)
-    Q = make_process_noise(variances)
+    state = make_kf_state(params)
+    H = np.array([[1, 0] * (STATE_SIZE // 2)])
+    Q = np.zeros((STATE_SIZE, STATE_SIZE))
+    for i in range(variances.size):
+        Q[2 * i][2 * i] = variances[i]
     R = measurement_noise * np.identity(1)
     P = np.zeros((STATE_SIZE, STATE_SIZE))
     return state, A, P, Q, H, R
