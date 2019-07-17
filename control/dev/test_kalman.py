@@ -2,6 +2,7 @@ from kalman import *
 import numpy as np
 from matplotlib import pyplot as plt
 import sys
+from aberrations import make_atm_data, make_vibe_data, make_noisy_data
 
 def test_quality1(disp=False, process_noise=0, measurement_noise=0.12):
     # test filtering assuming you have (close to) perfect physics and you know it
@@ -59,17 +60,19 @@ def test_quality2(disp=False, process_noise=0.03, measurement_noise=0.06):
         plt.show()
     print(np.sqrt(np.mean((filtered - truth)**2)))
 
-def test_sysid_freq(disp=True):
-    truth = make_vibe_data(1)
+def test_sysid_freq(disp=True, N=0):
+    truth = make_atm_data()[0] + make_vibe_data(N)
     measurements = make_noisy_data(truth)
     params, variances = vibe_fit_freq(get_psd(measurements))
     filtered = kfilter(make_kfilter(params, variances), measurements)
+    rms = np.sqrt(np.mean((filtered - truth)**2))
     if disp:
         plt.plot(times, truth, label='Truth')
         plt.plot(times, filtered, label='Filtered')
         plt.legend()
+        plt.title("Frequency fit, rms error (mas) = " + str(np.round(rms, 3)))
         plt.show()
-    return np.sqrt(np.mean((filtered - truth)**2))
+    return rms
 
 def test_time_fit(disp=True, N=1):
     truth = make_vibe_data(N)

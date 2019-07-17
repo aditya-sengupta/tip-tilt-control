@@ -8,7 +8,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from scipy import signal, ndimage
 
-N_vib_app = 0
+N_vib_app = 10
 f_sampling = 1000  # Hz
 f_1 = f_sampling / 60  # lowest possible frequency of a vibration mode
 f_2 = f_sampling / 3  # highest possible frequency of a vibration mode
@@ -104,4 +104,4 @@ def make_atm_data():
     cm = cm.T
     return cm
 
-pos = make_noisy_data(make_vibe_data() + make_atm_data(), 0)
+pos = make_noisy_data(make_vibe_data() + make_atm_data()[0])

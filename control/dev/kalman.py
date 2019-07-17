@@ -14,8 +14,7 @@ f_sampling = 1000  # Hz
 f_1 = f_sampling / 60  # lowest possible frequency of a vibration mode
 f_2 = f_sampling / 3  # highest possible frequency of a vibration mode
 f_w = f_sampling / 3  # frequency above which measurement noise dominates
-N_vib_app = 1  # number of vibration modes being applied
-N_vib_max = 1  # number of vibration modes to be detected
+N_vib_max = 10  # number of vibration modes to be detected
 energy_cutoff = 1e-8  # proportion of total energy after which PSD curve fit ends
 measurement_noise = 0.06  # milliarcseconds; pulled from previous notebook
 time_id = 1  # timescale over which sysid runs. Pulled from Meimon 2010's suggested 1 Hz sysid frequency.
@@ -292,6 +291,8 @@ def make_kfilter(params, variances):
 
 def kfilter(args, measurements):
     state, A, P, Q, H, R = args
+    # jank fix to the state
+    state *= measurements[0]/H.dot(state)
     steps = int(f_sampling * time_id)
     pos_r = np.zeros(steps)
     for k in range(steps):
@@ -302,6 +303,6 @@ def kfilter(args, measurements):
 
 
 if __name__ == "__main__":
-    plt.semilogy(freqs, get_psd(pos[0]))
+    plt.semilogy(freqs, get_psd(pos))
     plt.ylim(1e-7,1)
     plt.show()
