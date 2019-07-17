@@ -5,6 +5,9 @@ import numpy as np
 from scipy import integrate, optimize, signal, stats
 import copy
 import itertools
+from matplotlib import pyplot as plt
+
+from aberrations import pos
 
 # global parameter definitions
 f_sampling = 1000  # Hz
@@ -20,35 +23,9 @@ times = np.arange(0, time_id, 1 / f_sampling)  # array of times to operate on
 freqs = np.linspace(0, f_sampling // 2, f_sampling // 2 + 1)  # equivalent to signal.periodogram(...)[0]
 
 
-def make_vibe_data(N_vib_app=N_vib_app):
-    # takes in nothing (params are globally set in the 'global parameter definitions' cell)
-    # returns a 1D np array with the same dimension as times.
-    # note that we don't have access to the random parameters, just the output.
-    times = np.arange(0, time_id, 1 / f_sampling)
-    vib_freqs = np.random.uniform(low=f_1, high=f_2, size=N_vib_app)  # Hz
-    vib_amps = np.random.uniform(low=0.1, high=1, size=N_vib_app)  # milliarcseconds
-    vib_phase = np.random.uniform(low=0.0, high=2 * np.pi, size=N_vib_app)  # radians
-    vib_damping = np.random.uniform(low=1e-5, high=1e-2, size=N_vib_app)  # unitless
-
-    pos = sum([vib_amps[i] * np.cos(2 * np.pi * vib_freqs[i] * times - vib_phase[i])
-               * np.exp(-2 * np.pi * vib_damping[i] * vib_freqs[i] * times) for i in range(N_vib_app)])
-
-    return pos
-
-
-def make_noisy_data(pos, noise=measurement_noise):
-    return pos + np.random.normal(0, noise, np.size(times))
-
-
-def make_atm_data():
-    # takes in nothing (params are globally set in the 'global parameter definitions' cell)
-    # returns a 1D np array with the same dimension as times
-    # to be changed, clearly
-    return np.zeros(int(time_id * f_sampling))
-
-
 def get_psd(pos):
     return signal.periodogram(pos, f_sampling)[1]
+    # return np.fft.fftshift(np.fft.fft(pos))[pos.size//2-1:] if you want the FFTR
 
 
 def noise_filter(psd):
@@ -83,9 +60,7 @@ def noise_filter(psd):
     ind_cutoff = np.argmax(freqs > f_2)
     psd[ind_cutoff:] = energy_cutoff * np.ones(len(psd) - ind_cutoff)  # or all zero?
 
-    # and also a high-pass filter
-    ind_cutoff = np.argmin(freqs < f_1)
-    psd[:ind_cutoff] = energy_cutoff * np.ones(ind_cutoff)
+    # high pass filter removed because of important vibration data
 
     # bring the peaks back to where they were
     peak_ind = signal.find_peaks(psd, height=energy_cutoff)[0]
@@ -324,3 +299,9 @@ def kfilter(args, measurements):
         pos_r[k] = H.dot(state)
         state, P = predict(A, P, Q, state)
     return pos_r
+
+
+if __name__ == "__main__":
+    plt.semilogy(freqs, get_psd(pos[0]))
+    plt.ylim(1e-7,1)
+    plt.show()
