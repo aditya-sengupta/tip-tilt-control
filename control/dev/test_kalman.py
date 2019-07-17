@@ -60,10 +60,10 @@ def test_quality2(disp=False, process_noise=0.03, measurement_noise=0.06):
         plt.show()
     print(np.sqrt(np.mean((filtered - truth)**2)))
 
-def test_sysid_freq(disp=True, N=0):
-    truth = make_atm_data()[0] + make_vibe_data(N)
+def test_sysid_freq(disp=True, N=10):
+    truth =  make_atm_data()[0] + make_vibe_data(N)
     measurements = make_noisy_data(truth)
-    params, variances = vibe_fit_freq(get_psd(measurements))
+    params, variances = vibe_fit_freq(noise_filter(get_psd(measurements)))
     filtered = kfilter(make_kfilter(params, variances), measurements)
     rms = np.sqrt(np.mean((filtered - truth)**2))
     if disp:

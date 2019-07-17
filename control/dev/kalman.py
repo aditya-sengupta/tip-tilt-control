@@ -33,10 +33,8 @@ def noise_filter(psd):
     ind = np.argmax(freqs > f_w)
     assert ind != 0, "didn't find a high enough frequency"
     avg_measurement_power = np.mean(psd[ind:])
-    # measurement_noise_recovered = np.sqrt(f_sampling * avg_measurement_power)
-    # print("Recovered measurement noise: " + str(measurement_noise_recovered))
-    # print("Percent error in measurement noise estimate: "
-    #      + str(100 * np.abs(measurement_noise_recovered - measurement_noise)/measurement_noise))
+    measurement_noise_recovered = np.sqrt(f_sampling * avg_measurement_power)
+    print("Recovered measurement noise: " + str(measurement_noise_recovered))
 
     psd -= avg_measurement_power
 
