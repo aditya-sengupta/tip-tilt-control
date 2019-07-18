@@ -34,8 +34,6 @@ def noise_filter(psd):
     assert ind != 0, "didn't find a high enough frequency"
     avg_measurement_power = np.mean(psd[ind:])
     measurement_noise_recovered = np.sqrt(f_sampling * avg_measurement_power)
-    print("Recovered measurement noise: " + str(measurement_noise_recovered))
-
     psd -= avg_measurement_power
 
     # this subtraction is problematic because it goes negative, so quick correction here.
@@ -301,6 +299,9 @@ def kfilter(args, measurements):
 
 
 if __name__ == "__main__":
-    plt.semilogy(freqs, get_psd(pos))
-    plt.ylim(1e-7,1)
+    from aberrations import make_atm_data
+    atm = make_atm_data()[0]
+    psd = get_psd(atm)
+    plt.semilogy(freqs, psd)
+    plt.ylim(1e-7, 1)
     plt.show()

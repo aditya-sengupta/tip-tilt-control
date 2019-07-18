@@ -61,13 +61,15 @@ def test_quality2(disp=False, process_noise=0.03, measurement_noise=0.06):
     print(np.sqrt(np.mean((filtered - truth)**2)))
 
 def test_sysid_freq(disp=True, N=10):
-    truth =  make_atm_data()[0] + make_vibe_data(N)
+    truth = make_atm_data()[0] + make_vibe_data(N)
     measurements = make_noisy_data(truth)
     params, variances = vibe_fit_freq(noise_filter(get_psd(measurements)))
+    physics = sum(damped_harmonic(p) for p in params)
     filtered = kfilter(make_kfilter(params, variances), measurements)
     rms = np.sqrt(np.mean((filtered - truth)**2))
     if disp:
         plt.plot(times, truth, label='Truth')
+        plt.plot(times, physics, label='Physics')
         plt.plot(times, filtered, label='Filtered')
         plt.legend()
         plt.title("Frequency fit, rms error (mas) = " + str(np.round(rms, 3)))
