@@ -25,15 +25,22 @@ g = make_pupil_grid(p, diameter=D)
 mask = circular_aperture(D)(g)
 
 
-def make_vibe_data(N=N_vib_app):
-    # takes in nothing (params are globally set in the 'global parameter definitions' cell)
-    # returns a 1D np array with the same dimension as times.
-    # note that we don't have access to the random parameters, just the output.
-    times = np.arange(0, time_id, 1 / f_sampling)
+def make_vibe_params(N=N_vib_app):
     vib_freqs = np.random.uniform(low=f_1, high=f_2, size=N)  # Hz
     vib_amps = np.random.uniform(low=0.1, high=1, size=N)  # milliarcseconds
     vib_phase = np.random.uniform(low=0.0, high=2 * np.pi, size=N)  # radians
     vib_damping = np.random.uniform(low=1e-5, high=1e-2, size=N)  # unitless
+    return vib_freqs, vib_amps, vib_phase, vib_damping
+
+def make_vibe_data(vib_params=None, N=N_vib_app):
+    # takes in nothing (params are globally set in the 'global parameter definitions' cell)
+    # returns a 1D np array with the same dimension as times.
+    # note that we don't have access to the random parameters, just the output.
+    if vib_params is None:
+        vib_freqs, vib_amps, vib_phase, vib_damping = make_vibe_params(N)
+    else:
+        vib_freqs, vib_amps, vib_phase, vib_damping = vib_params
+        N = vib_freqs.size
 
     pos = sum([vib_amps[i] * np.cos(2 * np.pi * vib_freqs[i] * times - vib_phase[i])
                * np.exp(-2 * np.pi * vib_damping[i] * vib_freqs[i] * times) for i in range(N)])

@@ -1,4 +1,4 @@
-# Simulator of an Adaptive Optics Observer, using Kalman filtering.
+# Simulator of an adaptive optics system observer.
 # Operates on a single mode at a time.
 
 import numpy as np
