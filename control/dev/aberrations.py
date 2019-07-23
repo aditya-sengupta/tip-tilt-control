@@ -16,6 +16,7 @@ f_w = f_sampling / 3  # frequency above which measurement noise dominates
 measurement_noise = 0.06  # milliarcseconds; pulled from previous notebook
 time_id = 1  # timescale over which sysid runs. Pulled from Meimon 2010's suggested 1 Hz sysid frequency.
 times = np.arange(0, time_id, 1 / f_sampling)  # array of times to operate on
+num_steps = int(time_id * f_sampling)
 D = 10.95
 r0 = 16.5e-2   
 p = 24
@@ -30,20 +31,24 @@ def make_vibe_params(N=N_vib_app):
     vib_amps = np.random.uniform(low=0.1, high=1, size=N)  # milliarcseconds
     vib_phase = np.random.uniform(low=0.0, high=2 * np.pi, size=N)  # radians
     vib_damping = np.random.uniform(low=1e-5, high=1e-2, size=N)  # unitless
-    return vib_freqs, vib_amps, vib_phase, vib_damping
+    return vib_amps, vib_freqs, vib_phase, vib_damping
+
 
 def make_vibe_data(vib_params=None, N=N_vib_app):
-    # takes in nothing (params are globally set in the 'global parameter definitions' cell)
-    # returns a 1D np array with the same dimension as times.
-    # note that we don't have access to the random parameters, just the output.
+    # adjusted so that each 'pos' mode is the solution to the DE
+    # x'' + 2k w0 x' + w0^2 x = 0 with w0 = 2pi*f/sqrt(1-k^2) 
+    # (chosen so that vib_freqs matches up with the PSD freq)
     if vib_params is None:
-        vib_freqs, vib_amps, vib_phase, vib_damping = make_vibe_params(N)
+        vib_amps, vib_freqs, vib_phase, vib_damping = make_vibe_params(N)
     else:
-        vib_freqs, vib_amps, vib_phase, vib_damping = vib_params
+        vib_amps, vib_freqs, vib_phase, vib_damping = vib_params
         N = vib_freqs.size
 
-    pos = sum([vib_amps[i] * np.cos(2 * np.pi * vib_freqs[i] * times - vib_phase[i])
-               * np.exp(-2 * np.pi * vib_damping[i] * vib_freqs[i] * times) for i in range(N)])
+    vib_freqs *= 2 * np.pi # conversion to rad/s
+
+    pos = sum([vib_amps[i] * np.cos(vib_freqs[i] * times - vib_phase[i])
+               * np.exp(-(vib_damping[i]/(1 - vib_damping[i]**2)) * vib_freqs[i] * times) 
+               for i in range(N)])
 
     return pos
 

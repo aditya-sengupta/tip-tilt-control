@@ -33,21 +33,12 @@ def make_near_perfect_filter(process_noise=0.12, measurement_noise=0.12):
     return [state, A, P, Q, H, R], truth, measurements, physics
 
 
-def test_sysid_freq(disp=True, N=10):
-    truth = make_atm_data()[0] + make_vibe_data(N)
-    measurements = make_noisy_data(truth)
+def make_sysid_freq_filter(measurement_noise=0.12):
+    _, truth, measurements, _ = make_filter_help(measurement_noise)
     params, variances = vibe_fit_freq(noise_filter(get_psd(measurements)))
     physics = sum(damped_harmonic(p) for p in params)
-    filtered = kfilter(make_kfilter(params, variances), measurements)
-    rms = np.sqrt(np.mean((filtered - truth)**2))
-    if disp:
-        plt.plot(times, truth, label='Truth')
-        plt.plot(times, physics, label='Physics')
-        plt.plot(times, filtered, label='Filtered')
-        plt.legend()
-        plt.title("Frequency fit, rms error (mas) = " + str(np.round(rms, 3)))
-        plt.show()
-    return rms
+    args = make_kfilter(params, variances)
+    return args, truth, measurements, physics
 
 
 def test_time_fit(disp=True, N=1):
@@ -75,6 +66,7 @@ def test_filter(args, truth, measurements, physics, disp=(True, False, False, Tr
 
 test_perfect_filter = lambda: print(test_filter(*make_perfect_filter()))
 test_near_perfect_filter = lambda: print(test_filter(*make_near_perfect_filter()))
+test_sysid_freq_filter = lambda: print(test_filter(*make_sysid_freq_filter()))
 
 if __name__ == "__main__":
-    test_near_perfect_filter()
+    test_sysid_freq_filter()

@@ -4,8 +4,8 @@ from controller import *
 from test_observer import *
 import numpy as np
 
-def test_naive_control(args, truth, measurements, physics, disp=(True, False, False, True)):
-    controlled = naive_control(args, measurements)
+def test_control_naive(args, truth, measurements, physics, disp=(True, False, False, True)):
+    controlled = control_naive(args, measurements)
     toplot = (truth, measurements, physics, controlled)
     labels = ('Truth', 'Measurements', 'Physics', 'Controlled')
     for t, l, d in zip(toplot, labels, disp):
@@ -16,4 +16,4 @@ def test_naive_control(args, truth, measurements, physics, disp=(True, False, Fa
     return np.sqrt(np.mean((controlled)**2))
 
 if __name__ == "__main__":
-    print(test_naive_control(*make_perfect_filter()))
+    print(test_control_naive(*make_sysid_freq_filter()))

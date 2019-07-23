@@ -146,7 +146,7 @@ def reconstruct_modes(signal, N):
     return np.roots(theta)  # e^(-2pi k_i f_i + 1j * 2pi f_i)
 
 
-def vibe_fit_freq(psd):
+def vibe_fit_freq(psd, N=N_vib_max):
     # takes in the frequency axis for a PSD, and the PSD.
     # returns a 4xN np array with fit parameters, and a 1xN np array with variances.
     par0 = [0.5, 1e-4, np.pi, 1]
@@ -162,10 +162,10 @@ def vibe_fit_freq(psd):
 
     peaks = []
     psd_windowed = copy.deepcopy(psd)
-    for i in range(N_vib_max):
+    for i in range(N):
         peak = np.argmax(np.correlate(psd_windowed, reference_peak, 'same'))
         if psd_windowed[peak] <= energy_cutoff:  # skip
-            continue
+            continueA
         peaks.append(peak)
         psd_windowed[peak - indshift:peak + indshift] = energy_cutoff
 

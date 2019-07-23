@@ -1,11 +1,11 @@
-# assume an ideal Kalman filter is providing state estimates, make the optimal control law for TT including time delays.
+# Assuming an ideal Kalman filter is providing state estimates,
+# make the optimal control law for TT including time delays.
 
 import numpy as np
 from aberrations import *
 from observer import *
-from matplotlib import pyplot as plt
 
-def naive_control(args, measurements, delay=1):
+def control_naive(args, measurements, delay=1):
     # naive strategy of Kalman predicting 'delay' times and setting that as the expectation for the next timestep
     state, A, P, Q, H, R = args
     steps = int(f_sampling * time_id)
@@ -23,3 +23,6 @@ def naive_control(args, measurements, delay=1):
             control_action[k + delay] = -prediction
         state, P = predict(A, P, Q, state)
     return pos_r
+
+def control_LQG(args, measurements, delay=1):
+    raise NotImplementedError()
