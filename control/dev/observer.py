@@ -74,13 +74,8 @@ def atmosphere_fit(psd):
 
 def damped_harmonic(pars_model):
     A, f, k, p = pars_model
-    return A * np.exp(-k * 2 * np.pi * f * times) * np.cos(2 * np.pi * f * times - p)
+    return A * np.exp(-k * 2 * np.pi * f * times) * np.cos(2 * np.pi * f * np.sqrt(1 - k**2) * times - p)
 
-
-def damped_derivative(pars_model):
-    # utility: returns derivative of damped_harmonic evaluated at time 0
-    A, f, k, p = pars_model
-    return -A * 2 * np.pi * f * (-np.sin(p) + k  * np.cos(p))
 
 
 def make_psd(pars_model):
@@ -165,7 +160,7 @@ def vibe_fit_freq(psd, N=N_vib_max):
     for i in range(N):
         peak = np.argmax(np.correlate(psd_windowed, reference_peak, 'same'))
         if psd_windowed[peak] <= energy_cutoff:  # skip
-            continueA
+            continue
         peaks.append(peak)
         psd_windowed[peak - indshift:peak + indshift] = energy_cutoff
 
@@ -191,53 +186,13 @@ def make_state_transition(params):
     STATE_SIZE = 2 * params.shape[0]
     A = np.zeros((STATE_SIZE, STATE_SIZE))
     for i in range(STATE_SIZE // 2):
-        _, f, k, _ = params[i]
-        w = 2 * np.pi * f
-        a = -w * k
-        b = w * np.sqrt(1 - k ** 2)
-        c, s = np.cos(b * dt), np.sin(b * dt)
-        coeff = np.exp(a * dt) / b
-        A[2 * i][2 * i] = coeff * (-a * s + b * c)
-        A[2 * i][2 * i + 1] = coeff * s
-        A[2 * i + 1][2 * i] = -coeff * w ** 2 * s
-        A[2 * i + 1][2 * i + 1] = coeff * (a * s + b * c)
+        f, k = params[i][1:3]
+        w0 = 2 * np.pi * f / np.sqrt(1 - k**2)
+        A[2 * i][2 * i] = 2 *  np.exp(-k * w0 / f_sampling) * np.cos(w0 * np.sqrt(1 - k**2) / f_sampling)
+        A[2 * i][2 * i + 1] = -np.exp(-2 * k * w0 / f_sampling)
+        A[2 * i + 1][2 * i] = 1
+        A[2 * i + 1][2 * i + 1] = 0
     return A
-
-
-def make_state_transition_time(alpha):
-    dt = 1 / f_sampling
-    STATE_SIZE = 2 * alpha.shape[0]
-    A = np.zeros((STATE_SIZE, STATE_SIZE))
-    for i in range(STATE_SIZE // 2):
-        w = alpha[i].imag
-        k = alpha[i].real / alpha[i].imag
-        a = -w * k
-        b = w * np.sqrt(1 - k ** 2)
-        c, s = np.cos(b * dt), np.sin(b * dt)
-        coeff = np.exp(a * dt) / b
-        A[2 * i][2 * i] = coeff * (-a * s + b * c)
-        A[2 * i][2 * i + 1] = coeff * s
-        A[2 * i + 1][2 * i] = -coeff * w ** 2 * s
-        A[2 * i + 1][2 * i + 1] = coeff * (a * s + b * c)
-    return A
-
-
-def simulate(params):
-    A = make_state_transition(params)
-    STATE_SIZE = 2 * params.shape[0]
-    state = np.array(list(itertools.chain.from_iterable([[
-        damped_harmonic(params[i])[0],
-        damped_derivative(params[i])]
-        for i in range(STATE_SIZE // 2)])))
-    k = 0
-    pos_r = np.zeros(int(f_sampling * time_id))
-    H = np.array([[1, 0] * (STATE_SIZE // 2)])
-    while k < time_id * f_sampling:
-        pos_r[k] = H.dot(state)
-        state = A.dot(state)
-        k += 1
-    return pos_r
-
 
 
 def predict(A, P, Q, state):
@@ -251,12 +206,14 @@ def update(H, P, R, state, measurement):
 
 
 def make_kf_state(params):
-    return np.array(list(itertools.chain.from_iterable(
-        [[
-            damped_harmonic(params[i])[0], 
-            damped_derivative(params[i])
-        ] for i in range(params.shape[0])]
-    )))
+    dt = 1 / f_sampling
+    state = np.zeros(2*params.shape[0])
+    for i in range(params.shape[0]):
+        a, f, k, p = params[i]
+        w_d, w_f = 2*np.pi*f*k/np.sqrt(1-k**2), 2*np.pi*f
+        state[2*i] = a * np.cos(p)
+        state[2*i + 1] = a * np.cos(-w_f * dt - p) * np.exp(w_d * dt)
+    return state
 
 def make_ekf_state(params):
     return np.array(list(itertools.chain.from_iterable(
@@ -287,8 +244,6 @@ def make_kfilter(params, variances):
 
 def kfilter(args, measurements):
     state, A, P, Q, H, R = args
-    # jank fix to the state
-    state *= measurements[0]/H.dot(state)
     steps = int(f_sampling * time_id)
     pos_r = np.zeros(steps)
     for k in range(steps):
@@ -299,9 +254,7 @@ def kfilter(args, measurements):
 
 
 if __name__ == "__main__":
-    from aberrations import make_atm_data
-    atm = make_atm_data()[0]
-    psd = get_psd(atm)
+    psd = get_psd(pos)
     plt.semilogy(freqs, psd)
     plt.ylim(1e-7, 1)
     plt.show()

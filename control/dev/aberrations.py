@@ -11,7 +11,7 @@ from scipy import signal, ndimage
 N_vib_app = 10
 f_sampling = 1000  # Hz
 f_1 = f_sampling / 60  # lowest possible frequency of a vibration mode
-f_2 = f_sampling / 30  # highest possible frequency of a vibration mode
+f_2 = f_sampling / 3  # highest possible frequency of a vibration mode
 f_w = f_sampling / 3  # frequency above which measurement noise dominates
 measurement_noise = 0.06  # milliarcseconds; pulled from previous notebook
 time_id = 1  # timescale over which sysid runs. Pulled from Meimon 2010's suggested 1 Hz sysid frequency.
@@ -44,10 +44,8 @@ def make_vibe_data(vib_params=None, N=N_vib_app):
         vib_amps, vib_freqs, vib_damping, vib_phase = vib_params
         N = vib_freqs.size
 
-    vib_freqs *= 2 * np.pi # conversion to rad/s
-
-    pos = sum([vib_amps[i] * np.cos(vib_freqs[i] * times - vib_phase[i])
-               * np.exp(-(vib_damping[i]/(1 - vib_damping[i]**2)) * vib_freqs[i] * times) 
+    pos = sum([vib_amps[i] * np.cos(2 * np.pi * vib_freqs[i] * times - vib_phase[i])
+               * np.exp(-(vib_damping[i]/(1 - vib_damping[i]**2)) * 2 * np.pi * vib_freqs[i] * times) 
                for i in range(N)])
 
     return pos
@@ -116,4 +114,4 @@ def make_atm_data():
     cm = cm.T
     return cm
 
-pos = make_noisy_data(make_vibe_data() + make_atm_data()[0])
+pos = make_noisy_data(make_vibe_data())
