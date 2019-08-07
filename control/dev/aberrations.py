@@ -1,4 +1,4 @@
-                                                             # Make aberrations. To be replaced by real-life data.
+# Make aberrations. To be replaced by real-life data.
 # Global variables are set separately in both, to test the effects of not perfectly knowing them.
 
 import sys
@@ -19,11 +19,17 @@ times = np.arange(0, time_id, 1 / f_sampling)  # array of times to operate on
 num_steps = int(time_id * f_sampling)
 D = 10.95
 r0 = 16.5e-2   
-p = 24
-wavelength = 5e-7
-pupil_grid = make_pupil_grid(p, D)
-g = make_pupil_grid(p, diameter=D)
-mask = circular_aperture(D)(g)
+p = 16
+focal_samples = 8 # samples per lambda over D
+focal_width = 8 # half the number of lambda over Ds
+D_magic = 1
+wavelength = 500e-9 # meters
+focal_size = 2 * focal_samples * focal_width
+pupil_grid = make_pupil_grid(pupil_size, D_magic)
+focal_grid = make_focal_grid_from_pupil_grid(pupil_grid, focal_samples, focal_width, wavelength=wavelength)
+prop = FraunhoferPropagator(pupil_grid, focal_grid)
+aperture = circular_aperture(D_magic)(pupil_grid)
+layers = make_standard_atmospheric_layers(pupil_grid)
 
 
 def make_vibe_params(N=N_vib_app):
@@ -55,63 +61,34 @@ def make_noisy_data(pos, noise=measurement_noise):
     return pos + np.random.normal(0, noise, np.size(times))
 
 
-def turbulence_phases():
-    outer_scale, wind_velocity = 20, 15
-    Cn2 = r0**(-5/3) / (0.423 * (2 * np.pi/wavelength)**2)
-    # returns a list of Fields representing the turbulence phases over time
-    single_layer_atmos = InfiniteAtmosphericLayer(pupil_grid,  Cn_squared=Cn2, L0=outer_scale, 
-                                                  velocity=wind_velocity, use_interpolation=True)
-    single_layer_turb = [None] * times.size
-    for n in range(times.size):
-        single_layer_atmos.evolve_until(times[n])
-        turb = single_layer_atmos.phase_for(wavelength)
-        single_layer_turb[n] = Field(turb, grid=g) * mask
-    return single_layer_turb
+def center_of_mass(f):
+    # takes in a Field, returns its CM.
+    s = f.grid.shape[0]
+    x, y = (n.flatten() for n in np.meshgrid(np.linspace(-s/2, s/2-1, s), np.linspace(-s/2, s/2-1, s)))
+    return np.round(np.array((sum(f*x), sum(f*y)))/sum(f), 3)
 
 
-def make_tt(phases):
-    modes = [i for i in range(1,3)] # 1 is tip 2 is tilt
-    basis = np.vstack([zernike(*ansi_to_zernike(i), D=D, grid=g) for i in modes]).T
-    tt_phases = [None] * times.size
-    to_multiply = basis.dot(np.linalg.inv(basis.T.dot(basis)).dot(basis.T))
-    for i in range(times.size):
-        tt_phases[i] = Field(to_multiply.dot(phases[i]), g)
-    return tt_phases
+def make_specific_tt(weights):
+    # weights = number of desired lambda-over-Ds the center of the PSF is to be moved. Tuple with (tip_wt, tilt_wt).
+    tt = [zernike(*ansi_to_zernike(i), D_magic)(pupil_grid) for i in (1, 2)]
+    scale = focal_samples / 4.86754191 # magic number to normalize to around one lambda-over-D
+    tt_wf = Wavefront(aperture * np.exp(1j * sum([w * z for w, z in zip(tt_weights, tt)]) * scale), wavelength)
+    return tt_wf
 
 
-def make_star(cutoff=1e-3, spread=5):
-    def star_helper(i, j):
-        center = g.shape//2
-        intensity = np.exp(-np.sum((np.array([i, j]) - center)**2)/spread)
-        if intensity > cutoff:
-            return intensity
-        return 0.0
+def make_atm_data(tt_wf=None):
+    conversion = (wavelength / D) * 206265000 / focal_samples
+    if wf is None:
+        tt_wf = Wavefront(aperture) # can induce a specified TT here if desired
 
-    return Field(np.fromfunction(np.vectorize(star_helper), g.shape).flatten(), g)
+    tt_cms = np.zeros((f_sampling * T, 2))
+    for n in range(f_sampling * T):
+        for layer in layers:
+            layer.evolve_until(times[n])
+            tt_wf = layer(tt_wf)
+        tt_cms[n] = center_of_mass(prop(tt_wf).intensity)
 
+    tt_cms *= conversion # pixels to mas
+    return tt_cms.T
 
-def convolve(f1, f2):
-    assert isinstance(f1, Field)
-    assert isinstance(f2, Field)
-    assert np.all(f1.grid.shape == f2.grid.shape)
-    convolved = signal.convolve2d(np.reshape(f1, f1.grid.shape), np.reshape(f2, f2.grid.shape))[::2, ::2].flatten()
-    return Field(convolved, f1.grid)
-
-
-def make_atm_data():
-    propagator = FresnelPropagator(input_grid=g, distance=10, num_oversampling=2, refractive_index=1.5)
-    star = make_star()
-    tt_phases = make_tt(turbulence_phases())
-    conversion = 0.04
-    cm = np.zeros((times.size, 2))
-    for i in range(times.size):
-        convolved_image = convolve(star, tt_phases[i])
-        detector_phase = propagator.forward(Wavefront(convolved_image, wavelength)).phase
-        cm[i] = ndimage.measurements.center_of_mass(np.array(detector_phase.reshape(g.shape)))
-
-    cm *= conversion    
-    cm -= np.tile(np.mean(cm, axis=0), (times.size, 1))
-    cm = cm.T
-    return cm
-
-pos = make_noisy_data(make_vibe_data())
+pos = make_noisy_data(make_vibe_data() + make_atm_data()[0])
