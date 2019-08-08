@@ -3,8 +3,7 @@
 
 import numpy as np
 from scipy import integrate, optimize, signal, stats
-import copy
-import itertools
+from copy import deepcopy
 from matplotlib import pyplot as plt
 
 from aberrations import pos
@@ -103,6 +102,7 @@ def psd_f(f):
 def reconstruct_modes(signal, N):
     # takes in a time axis for a signal, the signal, and the number of modes to reconstruct.
     # returns an np array of the exponential coefficients.
+    # doesn't really work, but is staying in here in case some modification could make it work later
     fact = np.math.factorial
     A = np.zeros((N, N), dtype='complex')
     d = np.zeros(N, dtype='complex')
@@ -156,7 +156,7 @@ def vibe_fit_freq(psd, N=N_vib_max):
     # any random peak should do; should be independent of the data though.
 
     peaks = []
-    psd_windowed = copy.deepcopy(psd)
+    psd_windowed = deepcopy(psd)
     for i in range(N):
         peak = np.argmax(np.correlate(psd_windowed, reference_peak, 'same'))
         if psd_windowed[peak] <= energy_cutoff:  # skip
@@ -182,7 +182,6 @@ def vibe_fit_freq(psd, N=N_vib_max):
 
 
 def make_state_transition(params):
-    dt = 1 / f_sampling
     STATE_SIZE = 2 * params.shape[0]
     A = np.zeros((STATE_SIZE, STATE_SIZE))
     for i in range(STATE_SIZE // 2):
@@ -191,7 +190,6 @@ def make_state_transition(params):
         A[2 * i][2 * i] = 2 *  np.exp(-k * w0 / f_sampling) * np.cos(w0 * np.sqrt(1 - k**2) / f_sampling)
         A[2 * i][2 * i + 1] = -np.exp(-2 * k * w0 / f_sampling)
         A[2 * i + 1][2 * i] = 1
-        A[2 * i + 1][2 * i + 1] = 0
     return A
 
 
@@ -214,16 +212,6 @@ def make_kf_state(params):
         state[2*i] = a * np.cos(p)
         state[2*i + 1] = a * np.cos(-w_f * dt - p) * np.exp(w_d * dt)
     return state
-
-def make_ekf_state(params):
-    return np.array(list(itertools.chain.from_iterable(
-        [[
-            damped_harmonic(params[i])[0], 
-            damped_derivative(params[i]),
-            -2 * np.pi * params[i][1] * params[i][2],
-            2 * np.pi * params[i][1] * np.sqrt(1 - params[i][2]**2)
-        ] for i in range(params.shape[0])]
-    )))
 
 
 def make_kfilter(params, variances):

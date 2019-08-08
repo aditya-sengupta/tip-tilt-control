@@ -7,6 +7,7 @@ from hcipy.hcipy import *
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy import signal, ndimage
+from copy import deepcopy
 
 N_vib_app = 10
 f_sampling = 1000  # Hz
@@ -19,7 +20,7 @@ times = np.arange(0, time_id, 1 / f_sampling)  # array of times to operate on
 num_steps = int(time_id * f_sampling)
 D = 10.95
 r0 = 16.5e-2   
-p = 16
+pupil_size = 16
 focal_samples = 8 # samples per lambda over D
 focal_width = 8 # half the number of lambda over Ds
 D_magic = 1
@@ -31,16 +32,17 @@ prop = FraunhoferPropagator(pupil_grid, focal_grid)
 aperture = circular_aperture(D_magic)(pupil_grid)
 layers = make_standard_atmospheric_layers(pupil_grid)
 
+make_vib_amps = lambda N: np.random.uniform(low=0.1, high=1, size=N)  # milliarcseconds
+make_vib_freqs = lambda N:  np.random.uniform(low=f_1, high=f_2, size=N)  # Hz
+make_vib_damping = lambda N: np.random.uniform(low=1e-5, high=1e-2, size=N)  # unitless
+make_vib_phase = lambda N: np.random.uniform(low=0.0, high=2 * np.pi, size=N)  # radians
+
 
 def make_vibe_params(N=N_vib_app):
-    vib_amps = np.random.uniform(low=0.1, high=1, size=N)  # milliarcseconds
-    vib_freqs = np.random.uniform(low=f_1, high=f_2, size=N)  # Hz
-    vib_damping = np.random.uniform(low=1e-5, high=1e-2, size=N)  # unitless
-    vib_phase = np.random.uniform(low=0.0, high=2 * np.pi, size=N)  # radians
-    return vib_amps, vib_freqs, vib_damping, vib_phase
+    return (f(N) for f in [make_vib_amps, make_vib_freqs, make_vib_damping, make_vib_phase])
 
 
-def make_vibe_data(vib_params=None, N=N_vib_app):
+def make_1D_vibe_data(vib_params=None, times=times, N=N_vib_app):
     # adjusted so that each 'pos' mode is the solution to the DE
     # x'' + 2k w0 x' + w0^2 x = 0 with w0 = 2pi*f/sqrt(1-k^2) 
     # (chosen so that vib_freqs matches up with the PSD freq)
@@ -56,9 +58,19 @@ def make_vibe_data(vib_params=None, N=N_vib_app):
 
     return pos
 
+def make_2D_vibe_data(times=times, N=N_vib_app):
+    # adjusted so that each 'pos' mode is the solution to the DE
+    # x'' + 2k w0 x' + w0^2 x = 0 with w0 = 2pi*f/sqrt(1-k^2) 
+    # (chosen so that vib_freqs matches up with the PSD freq)
+    params_x = make_vibe_params(N)
+    params_y = deepcopy(params_x)
+    params_y[0] = make_vib_amps(N)
+    params_y[3] = make_vib_phase(N)
+    return np.hstack(make_1D_vibe_data(params_x, times, N).T, make_1D_vibe_data(params_y, times, N).T)
+
 
 def make_noisy_data(pos, noise=measurement_noise):
-    return pos + np.random.normal(0, noise, np.size(times))
+    return pos + np.random.normal(0, noise, np.size(pos))
 
 
 def center_of_mass(f):
@@ -76,13 +88,13 @@ def make_specific_tt(weights):
     return tt_wf
 
 
-def make_atm_data(tt_wf=None):
+def make_atm_data(wf=None):
     conversion = (wavelength / D) * 206265000 / focal_samples
     if wf is None:
-        tt_wf = Wavefront(aperture) # can induce a specified TT here if desired
+        wf = Wavefront(aperture, wavelength) # can induce a specified TT here if desired
 
-    tt_cms = np.zeros((f_sampling * T, 2))
-    for n in range(f_sampling * T):
+    tt_cms = np.zeros((f_sampling * time_id, 2))
+    for n in range(f_sampling * time_id):
         for layer in layers:
             layer.evolve_until(times[n])
             tt_wf = layer(tt_wf)
