@@ -6,8 +6,6 @@ from scipy import integrate, optimize, signal, stats
 from copy import deepcopy
 from matplotlib import pyplot as plt
 
-from aberrations import pos
-
 # global parameter definitions
 f_sampling = 1000  # Hz
 f_1 = f_sampling / 60  # lowest possible frequency of a vibration mode
@@ -74,7 +72,6 @@ def atmosphere_fit(psd):
 def damped_harmonic(pars_model):
     A, f, k, p = pars_model
     return A * np.exp(-k * 2 * np.pi * f * times) * np.cos(2 * np.pi * f * np.sqrt(1 - k**2) * times - p)
-
 
 
 def make_psd(pars_model):

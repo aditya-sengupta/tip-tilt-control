@@ -39,7 +39,7 @@ make_vib_phase = lambda N: np.random.uniform(low=0.0, high=2 * np.pi, size=N)  #
 
 
 def make_vibe_params(N=N_vib_app):
-    return (f(N) for f in [make_vib_amps, make_vib_freqs, make_vib_damping, make_vib_phase])
+    return [f(N) for f in [make_vib_amps, make_vib_freqs, make_vib_damping, make_vib_phase]]
 
 
 def make_1D_vibe_data(vib_params=None, times=times, N=N_vib_app):
@@ -66,7 +66,7 @@ def make_2D_vibe_data(times=times, N=N_vib_app):
     params_y = deepcopy(params_x)
     params_y[0] = make_vib_amps(N)
     params_y[3] = make_vib_phase(N)
-    return np.hstack(make_1D_vibe_data(params_x, times, N).T, make_1D_vibe_data(params_y, times, N).T)
+    return np.vstack((make_1D_vibe_data(params_x, times, N).T, make_1D_vibe_data(params_y, times, N).T)).T
 
 
 def make_noisy_data(pos, noise=measurement_noise):
@@ -97,10 +97,8 @@ def make_atm_data(wf=None):
     for n in range(f_sampling * time_id):
         for layer in layers:
             layer.evolve_until(times[n])
-            tt_wf = layer(tt_wf)
-        tt_cms[n] = center_of_mass(prop(tt_wf).intensity)
+            wf = layer(wf)
+        tt_cms[n] = center_of_mass(prop(wf).intensity)
 
     tt_cms *= conversion # pixels to mas
     return tt_cms.T
-
-pos = make_noisy_data(make_vibe_data() + make_atm_data()[0])
