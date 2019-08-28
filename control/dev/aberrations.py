@@ -34,7 +34,7 @@ layers = make_standard_atmospheric_layers(pupil_grid)
 
 make_vib_amps = lambda N: np.random.uniform(low=0.1, high=1, size=N)  # milliarcseconds
 make_vib_freqs = lambda N:  np.random.uniform(low=f_1, high=f_2, size=N)  # Hz
-make_vib_damping = lambda N: np.random.uniform(low=1e-5, high=1e-2, size=N)  # unitless
+make_vib_damping = lambda N: np.random.uniform(low=1e-5, high=1e-4, size=N)  # unitless
 make_vib_phase = lambda N: np.random.uniform(low=0.0, high=2 * np.pi, size=N)  # radians
 
 
