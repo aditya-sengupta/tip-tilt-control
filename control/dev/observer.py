@@ -37,7 +37,7 @@ def noise_filter(psd):
     # Want a better way of doing this.
 
     for i, p in enumerate(psd):
-        if p < 0:
+        if p < 0:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
             psd[i] = energy_cutoff
 
     # squelch: removing noise by applying a smoothing filter (convolution with [0.05, 0.1, 0.7, 0.1, 0.05])

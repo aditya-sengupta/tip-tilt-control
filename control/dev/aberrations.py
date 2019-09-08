@@ -24,7 +24,6 @@ pupil_size = 40
 focal_samples = 20 # samples per lambda over D
 focal_width = 20 # the number of lambda over Ds
 wavelength = 500e-9 # meters
-focal_size = 2 * focal_samples * focal_width
 pupil_grid = make_pupil_grid(pupil_size)
 focal_grid = make_focal_grid_from_pupil_grid(pupil_grid, focal_samples, focal_width, wavelength=wavelength)
 prop = FraunhoferPropagator(pupil_grid, focal_grid)
