@@ -6,7 +6,7 @@ sys.path.append("..")
 from hcipy.hcipy import *
 import numpy as np
 from matplotlib import pyplot as plt
-from scipy import signal, ndimage
+from scipy import signal, fftpack
 from copy import deepcopy
 
 N_vib_app = 10
@@ -21,14 +21,16 @@ num_steps = int(time_id * f_sampling)
 D = 10.95
 r0 = 16.5e-2   
 pupil_size = 40
+coeff_deconv = 20 # power to raise the deconvolved image to, to create better contrast for the CM
 focal_samples = 20 # samples per lambda over D
 focal_width = 20 # the number of lambda over Ds
+s = focal_samples * pupil_size
 wavelength = 500e-9 # meters
 pupil_grid = make_pupil_grid(pupil_size)
 focal_grid = make_focal_grid_from_pupil_grid(pupil_grid, focal_samples, focal_width, wavelength=wavelength)
-prop = FraunhoferPropagator(pupil_grid, focal_grid)
+propagate = FraunhoferPropagator(pupil_grid, focal_grid)
 aperture = circular_aperture(1)(pupil_grid)
-
+psf = np.array(propagate(Wavefront(aperture, wavelength)).intensity.reshape((s, s)))
 
 make_vib_amps = lambda N: np.random.uniform(low=0.1, high=1, size=N)  # milliarcseconds
 make_vib_freqs = lambda N:  np.random.uniform(low=f_1, high=f_2, size=N)  # Hz
@@ -95,13 +97,18 @@ def correct_until(self, t):
 ModalAdaptiveOpticsLayer.correction_for = correction_for
 ModalAdaptiveOpticsLayer.correct_until = correct_until
 
-
 def make_specific_tt(weights):
     # weights = number of desired lambda-over-Ds the center of the PSF is to be moved. Tuple with (tip_wt, tilt_wt).
     tt = [zernike(*ansi_to_zernike(i), 1)(pupil_grid) for i in (1, 2)]
     tt_wf = Wavefront(aperture * np.exp(1j * np.pi * sum([w * z for w, z in zip(tt_weights, tt)]) * scale), wavelength)
     return tt_wf
 
+# source: https://stackoverflow.com/questions/17473917/is-there-a-equivalent-of-scipy-signal-deconvolve-for-2d-arrays
+def deconvolve(spot, psf):
+    spot_array = np.array(spot.reshape((s, s)))
+    spot_fft = fftpack.fftshift(fftpack.fftn(spot))
+    psf_fft = fftpack.fftshift(fftpack.fftn(psf))
+    return Field(np.real(fftpack.fftshift(fftpack.ifftn(fftpack.ifftshift(spot_fft/psf_fft)))), focal_grid)
 
 def make_atm_data():
     layers = make_standard_atmospheric_layers(pupil_grid)
@@ -117,8 +124,8 @@ def make_atm_data():
             layer.correct_until(times[n])
             phase += layer.phase_for(wavelength)
         wf = Wavefront(aperture * np.exp(1j * phase), wavelength)
-        total_intensity = prop(wf).intensity
-        tt_cms[n] = center_of_mass(total_intensity)
+        total_intensity = propagate(wf).intensity
+        tt_cms[n] = center_of_mass(deconvolve(total_intensity, psf) ** coeff_deconv)
 
     tt_cms *= conversion # pixels to mas
     return tt_cms
