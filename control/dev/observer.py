@@ -90,8 +90,8 @@ def log_likelihood(func, data):
 
 def psd_f(f):
     def get_psd_f(pars):
-        A, k, p = pars
-        return make_psd([A, f, k, p])
+        k = pars[0]
+        return make_psd([1, f, k, np.pi])
 
     return get_psd_f
 
@@ -99,26 +99,29 @@ def psd_f(f):
 def vibe_fit_freq(psd, N=N_vib_max):
     # takes in the frequency axis for a PSD, and the PSD.
     # returns a 4xN np array with fit parameters, and a 1xN np array with variances.
-    par0 = [0.5, 1e-4, np.pi, 1]
-    PARAMS_SIZE = len(par0)  # slightly misleading: std is in par0 and frequency isn't so it matches up.
+    par0 = [1e-4, 1]
+    PARAMS_SIZE = 2
 
     # peak detection by correlation
-    indshift = int(5 * time_id)  # index shift rescaling a freq shift of 5 Hz due to ID time;
+    indshift = 5 # index shift rescaling a freq shift of 5 Hz due to ID time;
     # number of samples goes up because more time
     reference_peak = psd_f(250)(par0[:-1])
     center = np.argmax(reference_peak)
     reference_peak = reference_peak[center - indshift:center + indshift]
     # any random peak should do; should be independent of the data though.
 
-    peaks = []
+    '''peaks = []
     psd_windowed = deepcopy(psd)
     for i in range(N):
         peak = np.argmax(np.correlate(psd_windowed, reference_peak, 'same'))
         if psd_windowed[peak] <= energy_cutoff:  # skip
             continue
         peaks.append(peak)
-        psd_windowed[peak - indshift:peak + indshift] = energy_cutoff
-
+        psd_windowed[peak - indshift:peak + indshift] = energy_cutoff'''
+    
+    peak_energies = psd[signal.find_peaks(psd)[0]]
+    peaks = np.argsort(peak_energies)[-N:]
+    print(peaks)
     params = np.zeros((len(peaks), PARAMS_SIZE))
     variances = np.zeros(len(peaks))
 
@@ -128,9 +131,11 @@ def vibe_fit_freq(psd, N=N_vib_max):
     for i, peak_ind in enumerate(peaks):
         l, r = peak_ind - indshift, peak_ind + indshift
         windowed = psd[l:r]
+        plt.plot(freqs[l:r], windowed[l:r])
+        plt.show()
         psd_ll = log_likelihood(lambda pars: psd_f(freqs[peak_ind])(pars)[l:r], windowed)
-        A, k, p, sd = optimize.minimize(psd_ll, par0, method='Nelder-Mead').x
-        params[i] = [A, freqs[peak_ind], k, p]
+        k, sd = optimize.minimize(psd_ll, par0, method='Nelder-Mead').x
+        params[i] = [freqs[peak_ind], k]
         variances[i] = sd ** 2
 
     return params, variances
@@ -140,7 +145,7 @@ def make_state_transition(params):
     STATE_SIZE = 2 * params.shape[0]
     A = np.zeros((STATE_SIZE, STATE_SIZE))
     for i in range(STATE_SIZE // 2):
-        f, k = params[i][1:3]
+        f, k = params[i]
         w0 = 2 * np.pi * f / np.sqrt(1 - k**2)
         A[2 * i][2 * i] = 2 *  np.exp(-k * w0 / f_sampling) * np.cos(w0 * np.sqrt(1 - k**2) / f_sampling)
         A[2 * i][2 * i + 1] = -np.exp(-2 * k * w0 / f_sampling)
