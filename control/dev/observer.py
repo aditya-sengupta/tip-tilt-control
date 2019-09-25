@@ -37,7 +37,7 @@ def noise_filter(psd):
     # Want a better way of doing this.
 
     for i, p in enumerate(psd):
-        if p < 0:
+        if p < 0:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
             psd[i] = energy_cutoff
 
     # squelch: removing noise by applying a smoothing filter (convolution with [0.05, 0.1, 0.7, 0.1, 0.05])
@@ -94,48 +94,6 @@ def psd_f(f):
         return make_psd([A, f, k, p])
 
     return get_psd_f
-
-
-def reconstruct_modes(signal, N):
-    # takes in a time axis for a signal, the signal, and the number of modes to reconstruct.
-    # returns an np array of the exponential coefficients.
-    # doesn't really work, but is staying in here in case some modification could make it work later
-    fact = np.math.factorial
-    A = np.zeros((N, N), dtype='complex')
-    d = np.zeros(N, dtype='complex')
-    v = N + 5
-
-    def permute(n, k):
-        # useful because it's the coefficient on the 'k'th derivative of s^n
-        assert n >= k, "permute got a bad value"
-        return fact(n) / fact(n - k)
-
-    def choose(n, k):
-        # useful because product rule works
-        assert n >= k, "choose got a bad value"
-        return fact(n) / (fact(k) * fact(n - k))
-
-    # set up d
-
-    for i in range(1, N + 1):
-        for k in range(N + 2):
-            to_integrate = (time_id - times) ** (v - N + k - 2) * times ** (N + i - k) * signal
-            integral = integrate.simps(to_integrate, times)
-            d[i - 1] += choose(N + i, k) * permute(N + 1, k) * (-1) ** (N + i - k) / fact(v - N + k - 2) * integral
-
-    # set up A
-    for i in range(1, N + 1):
-        for j in range(1, N + 1):
-            for k in range(N + 2 - j):
-                to_integrate = (time_id - times) ** (v - N + j + k - 2) * times ** (N + i - k) * signal
-                integral = integrate.simps(to_integrate, times)
-                A[i - 1][j - 1] += choose(N + i, k) * permute(N + 1 - j, k) * (-1) ** (N + i - k) / fact(
-                    v - N + j + k - 2) * integral
-
-    # d = A*theta
-    theta = np.linalg.inv(A).dot(d)
-    theta = np.hstack((1, -theta))
-    return np.roots(theta)  # e^(-2pi k_i f_i + 1j * 2pi f_i)
 
 
 def vibe_fit_freq(psd, N=N_vib_max):
