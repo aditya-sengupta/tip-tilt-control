@@ -106,22 +106,22 @@ def make_specific_tt(weights):
 # source: https://stackoverflow.com/questions/17473917/is-there-a-equivalent-of-scipy-signal-deconvolve-for-2d-arrays
 def deconvolve(spot, psf):
     spot_array = np.array(spot.reshape((s, s)))
-    spot_fft = fftpack.fftshift(fftpack.fftn(spot))
+    spot_fft = fftpack.fftshift(fftpack.fftn(spot_array))
     psf_fft = fftpack.fftshift(fftpack.fftn(psf))
-    return Field(np.real(fftpack.fftshift(fftpack.ifftn(fftpack.ifftshift(spot_fft/psf_fft)))), focal_grid)
+    return Field(np.real(fftpack.fftshift(fftpack.ifftn(fftpack.ifftshift(spot_fft/psf_fft)))).flatten(), focal_grid)
 
-def make_atm_data():
+def make_atm_data(t=time_id):
     layers = make_standard_atmospheric_layers(pupil_grid)
     tt = [zernike(*ansi_to_zernike(i), 1)(pupil_grid) for i in (1, 2)] # tip-tilt phase basis
     MOAlayers = [ModalAdaptiveOpticsLayer(layer, controlled_modes=ModeBasis(tt), lag=0) for layer in layers]
     conversion = (wavelength / D) * 206265000 / focal_samples
 
-    tt_cms = np.zeros((f_sampling * time_id, 2))
-    for n in range(f_sampling * time_id):
+    tt_cms = np.zeros((int(f_sampling * t), 2))
+    for n in range(int(f_sampling * t)):
         wf = Wavefront(aperture, wavelength)
         phase = wf.phase
         for layer in MOAlayers:
-            layer.correct_until(times[n])
+            layer.correct_until(n / f_sampling)
             phase += layer.phase_for(wavelength)
         wf = Wavefront(aperture * np.exp(1j * phase), wavelength)
         total_intensity = propagate(wf).intensity

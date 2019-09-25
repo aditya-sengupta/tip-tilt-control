@@ -1,6 +1,6 @@
 syms q pp c pm
 syms a1
-r = 0.06;
+syms r positives
 A = [[a1, -1];[1, 0]];
 P = [[pm, 0];[0, pp]];
 Q = [[q, 0];[0, 0]];
