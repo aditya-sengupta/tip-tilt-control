@@ -49,10 +49,12 @@ def noise_filter(psd):
     psd = np.convolve(psd, kernel)[c:-c]
 
     # ad hoc low-pass filter
-    ind_cutoff = np.argmax(freqs > f_2)
-    psd[ind_cutoff:] = energy_cutoff * np.ones(len(psd) - ind_cutoff)  # or all zero?
+    high_cutoff = np.argmax(freqs > f_2)
+    psd[high_cutoff:] = energy_cutoff * np.ones(len(psd) - high_cutoff)  # or all zero?
 
-    # high pass filter removed because of important vibration data
+    # high pass filter
+    # low_cutoff = np.argmin(freqs < f_1)
+    # psd[:low_cutoff] = energy_cutoff * np.ones(low_cutoff)
 
     # bring the peaks back to where they were
     peak_ind = signal.find_peaks(psd, height=energy_cutoff)[0]
@@ -60,13 +62,6 @@ def noise_filter(psd):
         psd[i] = psd[i] / conv_peak
 
     return psd
-
-
-def atmosphere_fit(psd):
-    # takes in a PSD to be fitted to atmospheric data.
-    # returns the residual PSD, and a 3x1 np array with fit parameters [k, f, sigma**2]
-    # to be changed
-    return psd, np.array([0, 0, 0])
 
 
 def damped_harmonic(pars_model):
@@ -101,42 +96,31 @@ def vibe_fit_freq(psd, N=N_vib_max):
     # returns a 4xN np array with fit parameters, and a 1xN np array with variances.
     par0 = [1e-4, 1]
     PARAMS_SIZE = 2
+    width = 1
 
-    # peak detection by correlation
-    indshift = 5 # index shift rescaling a freq shift of 5 Hz due to ID time;
-    # number of samples goes up because more time
-    reference_peak = psd_f(250)(par0[:-1])
-    center = np.argmax(reference_peak)
-    reference_peak = reference_peak[center - indshift:center + indshift]
-    # any random peak should do; should be independent of the data though.
+    peaks = []
+    unsorted_peaks = signal.find_peaks(psd)[0]
+    freqs_energy = np.flip(np.argsort(psd)) # frequencies ordered by their energy
+    for f in freqs_energy:
+        if f in unsorted_peaks:
+            peaks.append(f)
 
-    '''peaks = []
-    psd_windowed = deepcopy(psd)
-    for i in range(N):
-        peak = np.argmax(np.correlate(psd_windowed, reference_peak, 'same'))
-        if psd_windowed[peak] <= energy_cutoff:  # skip
+    params = np.zeros((N, PARAMS_SIZE))
+    variances = np.zeros(N)
+
+    i = 0
+    for peak_ind in peaks:
+        if i >= N:
+            break
+        if np.any(np.abs(params[:,0] - peak_ind) <= width): #or peak_ind < f_1 + width or peak_ind > f_2 - width:
             continue
-        peaks.append(peak)
-        psd_windowed[peak - indshift:peak + indshift] = energy_cutoff'''
-    
-    peak_energies = psd[signal.find_peaks(psd)[0]]
-    peaks = np.argsort(peak_energies)[-N:]
-    print(peaks)
-    params = np.zeros((len(peaks), PARAMS_SIZE))
-    variances = np.zeros(len(peaks))
-
-    # curve-fit to each identified peak and find corresponding parameters
-    # currently, the number of identified peaks is always the maximum possible
-    # since the idea of an 'applied vibration mode' exists only in simulation, this seems reasonable
-    for i, peak_ind in enumerate(peaks):
-        l, r = peak_ind - indshift, peak_ind + indshift
+        l, r = peak_ind - width, peak_ind + width
         windowed = psd[l:r]
-        plt.plot(freqs[l:r], windowed[l:r])
-        plt.show()
         psd_ll = log_likelihood(lambda pars: psd_f(freqs[peak_ind])(pars)[l:r], windowed)
         k, sd = optimize.minimize(psd_ll, par0, method='Nelder-Mead').x
         params[i] = [freqs[peak_ind], k]
         variances[i] = sd ** 2
+        i += 1
 
     return params, variances
 
@@ -162,25 +146,13 @@ def update(H, P, R, state, measurement):
     K = P.dot(H.T.dot(np.linalg.inv(H.dot(P.dot(H.T)) + R)))
     return state + K.dot(error), P - K.dot(H.dot(P))
 
-
-def make_kf_state(params):
-    dt = 1 / f_sampling
-    state = np.zeros(2*params.shape[0])
-    for i in range(params.shape[0]):
-        a, f, k, p = params[i]
-        w_d, w_f = 2*np.pi*f*k/np.sqrt(1-k**2), 2*np.pi*f
-        state[2*i] = a * np.cos(p)
-        state[2*i + 1] = a * np.cos(-w_f * dt - p) * np.exp(w_d * dt)
-    return state
-
-
 def make_kfilter(params, variances):
     # takes in parameters and variances from which to make a physics simulation
     # and measurements to match it against.
     # returns state, A, P, Q, H, R for kfilter to run.
     A = make_state_transition(params)
     STATE_SIZE = 2 * params.shape[0]
-    state = make_kf_state(params)
+    state = np.zeros(STATE_SIZE)
     H = np.array([[1, 0] * (STATE_SIZE // 2)])
     Q = np.zeros((STATE_SIZE, STATE_SIZE))
     for i in range(variances.size):
@@ -194,10 +166,19 @@ def kfilter(args, measurements):
     state, A, P, Q, H, R = args
     steps = int(f_sampling * time_id)
     pos_r = np.zeros(steps)
+    steady_state = False
+    K = np.zeros((1, state.size))
     for k in range(steps):
-        state, P = update(H, P, R, state, measurements[k])
+        last_P = deepcopy(P)
+        if steady_state:
+            state = state + K.dot(measurements[k] - H.dot(state))
+        else:
+            state, P = update(H, P, R, state, measurements[k])
         pos_r[k] = H.dot(state)
         state, P = predict(A, P, Q, state)
+        if np.allclose(last_P, P):
+            steady_state = True
+            K = P.dot(H.T.dot(np.linalg.inv(H.dot(P.dot(H.T)) + R)))
     return pos_r
 
 
