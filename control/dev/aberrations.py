@@ -75,18 +75,16 @@ def make_noisy_data(pos, noise=measurement_noise):
 
 def center_of_mass(f):
     # takes in a Field, returns its CM.
-    s = f.grid.shape[0]
-    x, y = (n.flatten() for n in np.meshgrid(np.linspace(-s/2, s/2-1, s), np.linspace(-s/2, s/2-1, s)))
-    return np.round(np.array((sum(f*x), sum(f*y)))/sum(f), 3)
+    s = f.grid.shape[0]/2
+    normalize = s / (focal_samples * max(f.grid.x))
+    return normalize * np.array([(f.grid.x * f).sum(), (f.grid.y * f).sum()])/f.sum()
 
 
 def make_specific_tt(weights):
     # weights = number of desired lambda-over-Ds the center of the PSF is to be moved. Tuple with (tip_wt, tilt_wt).
     tt = [zernike(*ansi_to_zernike(i), D_magic)(pupil_grid) for i in (1, 2)]
-    scale = focal_samples / 4.86754191 # magic number to normalize to around one lambda-over-D
-    tt_wf = Wavefront(aperture * np.exp(1j * sum([w * z for w, z in zip(tt_weights, tt)]) * scale), wavelength)
+    tt_wf = Wavefront(aperture * np.exp(1j * np.pi * sum([w * z for w, z in zip(weights, tt)])), wavelength)
     return tt_wf
-
 
 def make_atm_data(wf=None):
     conversion = (wavelength / D) * 206265000 / focal_samples
@@ -95,6 +93,7 @@ def make_atm_data(wf=None):
 
     tt_cms = np.zeros((f_sampling * time_id, 2))
     for n in range(f_sampling * time_id):
+        wf = Wavefront(aperture, wavelength)
         for layer in layers:
             layer.evolve_until(times[n])
             wf = layer(wf)
