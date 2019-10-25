@@ -169,10 +169,10 @@ def kfilter(args, measurements):
     steady_state = False
     K = np.zeros((1, state.size))
     for k in range(steps):
-        last_P = deepcopy(P)
         if steady_state:
             state = state + K.dot(measurements[k] - H.dot(state))
         else:
+            last_P = deepcopy(P)
             state, P = update(H, P, R, state, measurements[k])
         pos_r[k] = H.dot(state)
         state, P = predict(A, P, Q, state)
@@ -181,6 +181,16 @@ def kfilter(args, measurements):
             K = P.dot(H.T.dot(np.linalg.inv(H.dot(P.dot(H.T)) + R)))
     return pos_r
 
+def physics_predict(args, measurements):
+
+    state, A, _, _, H, _ = args
+    state = np.ones(state.size) # just to view what dynamics are like, we set a 'unity state'
+    steps = measurements.size
+    pos_r = np.zeros(steps)
+    for k in range(steps):
+        pos_r[k] = H.dot(state)
+        state = A.dot(state)
+    return pos_r
 
 if __name__ == "__main__":
     psd = get_psd(pos)
