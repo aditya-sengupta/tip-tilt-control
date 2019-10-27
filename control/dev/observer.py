@@ -164,7 +164,7 @@ def make_kfilter(params, variances):
 
 def kfilter(args, measurements):
     state, A, P, Q, H, R = args
-    steps = int(f_sampling * time_id)
+    steps = len(measurements)
     pos_r = np.zeros(steps)
     steady_state = False
     K = np.zeros((1, state.size))
