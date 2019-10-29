@@ -178,6 +178,7 @@ def kfilter(args, measurements):
         state, P = predict(A, P, Q, state)
         if np.allclose(last_P, P):
             steady_state = True
+            print("steady state at step ", k)
             K = P.dot(H.T.dot(np.linalg.inv(H.dot(P.dot(H.T)) + R)))
     return pos_r
 
