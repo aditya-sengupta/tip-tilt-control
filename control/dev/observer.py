@@ -162,10 +162,12 @@ def make_kfilter(params, variances):
     return state, A, P, Q, H, R
 
 
-def kfilter(args, measurements):
+def kfilter(args, measurements, physics=False):
     state, A, P, Q, H, R = args
     steps = len(measurements)
     pos_r = np.zeros(steps)
+    if physics:
+        predictions = np.zeros(steps)
     steady_state = False
     K = np.zeros((1, state.size))
     for k in range(steps):
@@ -176,16 +178,19 @@ def kfilter(args, measurements):
             state, P = update(H, P, R, state, measurements[k])
         pos_r[k] = H.dot(state)
         state, P = predict(A, P, Q, state)
+        if physics:
+            predictions[k] = H.dot(state)
         if np.allclose(last_P, P):
             steady_state = True
             print("steady state at step ", k)
             K = P.dot(H.T.dot(np.linalg.inv(H.dot(P.dot(H.T)) + R)))
+    if physics:
+        return pos_r, predictions
     return pos_r
 
 def physics_predict(args, measurements):
-
     state, A, _, _, H, _ = args
-    state = np.ones(state.size) # just to view what dynamics are like, we set a 'unity state'
+    #state = np.ones(state.size) # just to view what dynamics are like, we set a 'unity state'
     steps = measurements.size
     pos_r = np.zeros(steps)
     for k in range(steps):
