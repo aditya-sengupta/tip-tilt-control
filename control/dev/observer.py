@@ -124,8 +124,7 @@ def vibe_fit_freq(psd, N=N_vib_max):
 
     return params, variances
 
-
-def make_state_transition(params):
+def make_state_transition_vibe(params):
     STATE_SIZE = 2 * params.shape[0]
     A = np.zeros((STATE_SIZE, STATE_SIZE))
     for i in range(STATE_SIZE // 2):
@@ -136,7 +135,6 @@ def make_state_transition(params):
         A[2 * i + 1][2 * i] = 1
     return A
 
-
 def predict(A, P, Q, state):
     return A.dot(state), A.dot(P.dot(A.T)) + Q
 
@@ -146,7 +144,7 @@ def update(H, P, R, state, measurement):
     K = P.dot(H.T.dot(np.linalg.inv(H.dot(P.dot(H.T)) + R)))
     return state + K.dot(error), P - K.dot(H.dot(P))
 
-def make_kfilter(params, variances):
+def make_kfilter_vibe(params, variances):
     # takes in parameters and variances from which to make a physics simulation
     # and measurements to match it against.
     # returns state, A, P, Q, H, R for kfilter to run.
@@ -161,6 +159,8 @@ def make_kfilter(params, variances):
     P = np.zeros((STATE_SIZE, STATE_SIZE))
     return state, A, P, Q, H, R
 
+def make_kfilter_turb(N=100):
+    pass
 
 def kfilter(args, measurements, physics=False):
     state, A, P, Q, H, R = args
