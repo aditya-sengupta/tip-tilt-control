@@ -56,7 +56,7 @@ def control(truth, controller, noise=0.06, delay=1):
 
 
 class Controller:
-    def __init__(self, method, STATE_SIZE=None, calibration_time=None):
+    def __init__(self, method, *args, STATE_SIZE=None, calibration_time=None):
         if method == 'stdint':
             self.STATE_SIZE = 3
         else:
@@ -75,6 +75,7 @@ class Controller:
         elif method == 'kalman': # a controller for turbulence only and without LQG: just Kalman predicting.
             self.strategy = self.strategy_kalman
             self.make_state = self.make_state_AR
+            self.kfilter = args[0]
 
     def make_state_AR(self, calibration):
         # for autoregressive strategies, makes an initial state that's the first N openloop measurements
@@ -94,17 +95,17 @@ class Controller:
 
     def strategy_kalman(self, measurement):
         # describes a 'naive Kalman' control scheme, i.e. not LQG
-        # assumes you've already locally defined: state, A, H
-        state_pred = deepcopy(self.state)
-        for _ in range(self.delay):
-            state_pred = self.A.dot(state_pred)
-
-        pass
+        self.kfilter.update(measurement)
+        self.kfilter.predict()
+        state_pred = deepcopy(self.kfilter.state)
+        for _ in range(self.delay - 1):
+            state_pred = self.kfilter.A.dot(state_pred)
+        return self.kfilter.measure(state_pred)
 
 def run_stdint(size):
     stdint = Controller('stdint', 3)
     truth = np.load('keck_tt/OpenLoop_n0088.npy')[:size,0]
-    residuals, actions = control(truth, stdint, noise=0)
+    residuals, actions = control(truth, stdint)
     return truth, residuals, actions
 
 def run_baseline(size):

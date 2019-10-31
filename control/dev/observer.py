@@ -47,7 +47,9 @@ class KFilter:
         self.state + self.K.dot(error) 
         self.P - self.K.dot(self.H.dot(self.P))
 
-    def measure(self):
+    def measure(self, state=None):
+        if state is not None:
+            return self.H.dot(state)
         return self.H.dot(self.state)
 
     def run(self, measurements, save_physics=False):
