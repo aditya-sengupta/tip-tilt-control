@@ -7,6 +7,7 @@ from observer import *
 from copy import deepcopy
 
 rms = lambda data: np.sqrt(np.mean(data ** 2))
+noise = 0.06
 
 class Controller:
     def __init__(self, method, *args, STATE_SIZE=0, calibration_time=None):
@@ -27,11 +28,10 @@ class Controller:
             self.A = np.array([[-0.6, -0.32, -0.08], [1, 0, 0], [0, 1, 0]])
         elif method == 'kalman': # a controller for turbulence only and without LQG: just Kalman predicting.
             self.strategy = self.strategy_kalman
-            self.make_state = self.make_state_AR
             self.kfilter = args[0]
             self.calibration_time = self.kfilter.state.size
 
-    def control(self, truth, noise=0.06):
+    def control(self, truth, noise=noise):
         '''
         Simulates the general control problem.
 
@@ -95,20 +95,19 @@ class Controller:
 
     def strategy_kalman(self, measurement):
         # describes a 'naive Kalman' control scheme, i.e. not LQG
-        self.kfilter.state = self.state
         assert self.kfilter.state.any(), "starting from zero state"
         self.kfilter.update(measurement)
         self.kfilter.predict()
-        self.state = self.kfilter.state
-        state_pred = deepcopy(self.state)
+        state_pred = deepcopy(self.kfilter.state)
         for _ in range(self.delay - 1):
             state_pred = self.kfilter.A.dot(state_pred)
         return -self.kfilter.measure(state_pred)
 
 size = 2000
+N = 10
 keck_normalizer = 0.6 * (600e-9 / (2 * np.pi)) *  206265000
 truth = np.load('./turbulence.npy')[:size,0]# * keck_normalizer
-kalman = Controller('kalman', make_kfilter_turb(make_impulse(truth[:size//2], N=20)))
+kalman = Controller('kalman', make_kfilter_turb(make_impulse(truth[:size//2], N=N), truth[:N] + np.random.normal(0, noise, (N,))))
 stdint = Controller('stdint')
 baseline = Controller('baseline')
 
