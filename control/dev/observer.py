@@ -26,12 +26,10 @@ class KFilter:
         self.state = state
         self.A = A
         self.P = P
-        self.last_P = None
         self.Q = Q
         self.H = H
         self.R = R
         self.K = None
-        self.steady_state = False
 
     def reset(self):
         self.state = self.init_state
@@ -47,10 +45,8 @@ class KFilter:
 
     def update(self, measurement):
         error = self.H.dot(self.state) - measurement
-        if not self.steady_state:
-            self.last_P = deepcopy(self.P)
-            self.set_gain()
-        self.state = self.state + self.K.dot(error) 
+        self.set_gain()
+        self.state = self.state - self.K.dot(error) 
         self.P = self.P - self.K.dot(self.H.dot(self.P))
 
     def measure(self, state=None):
@@ -69,12 +65,7 @@ class KFilter:
             pos_r[k] = self.measure()
             self.predict()
             if save_physics:
-                predictions[k] = self.measure()
-            if not self.steady_state and np.allclose(self.last_P, self.P):
-                print("last_P", self.last_P[0])
-                print("curr_P", self.P[0])
-                self.steady_state = True
-                print("steady state at step", k)
+                predictions[k] = self.measure() # off by one?
         if save_physics:
             return pos_r, predictions
         return pos_r
