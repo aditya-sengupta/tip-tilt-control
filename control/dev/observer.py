@@ -22,7 +22,6 @@ a = 1e-6 # the pole location for the f^(-2/3) powerlaw
 
 class KFilter:
     def __init__(self, state, A, P, Q, H, R):
-        self.init_state = state
         self.state = state
         self.A = A
         self.P = P
@@ -30,11 +29,6 @@ class KFilter:
         self.H = H
         self.R = R
         self.K = None
-
-    def reset(self):
-        self.state = self.init_state
-        self.P = np.zeros((self.state.size, self.state.size))
-        # for system-identification based kfilters, you may have to cache and reset A, Q, H, or R as well.
 
     def predict(self):
         self.state = self.A.dot(self.state)
@@ -44,9 +38,9 @@ class KFilter:
         self.K = self.P.dot(self.H.T.dot(np.linalg.inv(self.H.dot(self.P.dot(self.H.T)) + self.R)))
 
     def update(self, measurement):
-        error = self.H.dot(self.state) - measurement
+        error = measurement - self.measure()
         self.set_gain()
-        self.state = self.state - self.K.dot(error) 
+        self.state = self.state + self.K.dot(error) 
         self.P = self.P - self.K.dot(self.H.dot(self.P))
 
     def measure(self, state=None):
@@ -259,7 +253,7 @@ def make_kfilter_turb(impulse, calibration):
     # when you start the filter, make sure to start it at time n with the first n measurements identically
     P = np.zeros((n,n))
     Q = np.zeros((n,n))
-    Q[0][0] = 1000 # arbitrary: I have no idea how to set this yet.
+    Q[0][0] = 1 # arbitrary: I have no idea how to set this yet.
     H = np.zeros((1,n))
     H[:,0] = 1
     R = np.array([measurement_noise**2])

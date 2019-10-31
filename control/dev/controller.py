@@ -105,8 +105,8 @@ class Controller:
         state_pred = deepcopy(self.kfilter.state)
         for _ in range(self.delay - 1):
             state_pred = self.kfilter.A.dot(state_pred)
-        print("Prediction: ", self.kfilter.measure(state_pred))
-        print("Current: ", self.kfilter.measure(state))
+        #print("Prediction: ", self.kfilter.measure(state_pred))
+        #print("Current: ", self.kfilter.measure(state))
         return self.kfilter.measure(state_pred - state)
 
 size = 2000
