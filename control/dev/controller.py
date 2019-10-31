@@ -68,7 +68,7 @@ class Controller:
         # i.e. position[i+1] = position[i] + shifts[i] + actions[i]
         # where you were before, plus the change due to environment, plus the control action applied
 
-        print(time)
+        print("Starting at timestep", time)
         for i in range(time, truth.size):
             residuals[i] = residuals[i - 1] + shifts[i - 1] - actions[i - 1]
             measurement = residuals[i] + np.random.normal(0, noise)
@@ -105,10 +105,10 @@ class Controller:
             state_pred = self.kfilter.A.dot(state_pred)
         return -self.kfilter.measure(state_pred)
 
-size = 1000
+size = 2000
 keck_normalizer = 0.6 * (600e-9 / (2 * np.pi)) *  206265000
 truth = np.load('./turbulence.npy')[:size,0]# * keck_normalizer
-kalman = Controller('kalman', make_kfilter_turb(make_impulse(truth[:size//2], N=200)))
+kalman = Controller('kalman', make_kfilter_turb(make_impulse(truth[:size//2], N=10)))
 stdint = Controller('stdint')
 baseline = Controller('baseline')
 

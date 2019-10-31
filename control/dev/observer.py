@@ -260,7 +260,7 @@ def make_kfilter_turb(impulse):
     A = np.zeros((n, n))
     for i in range(1, n):
         A[i][i-1] = 1
-    A[0] = np.flip(np.real(impulse)/sum(np.real(impulse)))
+    A[0] = np.real(impulse)/sum(np.real(impulse))
     # when you start the filter, make sure to start it at time n with the first n measurements identically
     P = np.zeros((n,n))
     Q = np.zeros((n,n))
@@ -268,4 +268,4 @@ def make_kfilter_turb(impulse):
     H = np.zeros((1,n))
     H[:,0] = 1
     R = np.array([measurement_noise**2])
-    return KFilter(state, A, P, Q, H, R)
+    return KFilter(state, A, P, Q * 10000, H, R)
