@@ -108,7 +108,7 @@ class Controller:
 size = 2000
 keck_normalizer = 0.6 * (600e-9 / (2 * np.pi)) *  206265000
 truth = np.load('./turbulence.npy')[:size,0]# * keck_normalizer
-kalman = Controller('kalman', make_kfilter_turb(make_impulse(truth[:size//2], N=10)))
+kalman = Controller('kalman', make_kfilter_turb(make_impulse(truth[:size//2], N=20)))
 stdint = Controller('stdint')
 baseline = Controller('baseline')
 
