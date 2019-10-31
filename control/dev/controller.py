@@ -22,15 +22,18 @@ class Controller:
         if method == 'baseline':
             self.strategy = self.strategy_baseline
             self.make_state = self.strategy_baseline
+            self.is_openloop = False # doesn't matter
         elif method == 'stdint':
             self.strategy = self.strategy_stdint
             self.make_state = self.make_state_stdint
             self.A = np.array([[-0.6, -0.32, -0.08], [1, 0, 0], [0, 1, 0]])
+            self.is_openloop = False
         elif method == 'kalman': # a controller for turbulence only and without LQG: just Kalman predicting.
             self.strategy = self.strategy_kalman
             self.kfilter = args[0]
             self.calibration_time = self.kfilter.state.size
             self.make_state = self.make_state_AR # this is sort of jank: state and kfilter's state are different.
+            self.is_openloop = True
 
     def control(self, truth, noise=noise):
         '''
@@ -75,7 +78,12 @@ class Controller:
         for i in range(time, truth.size):
             residuals[i] = residuals[i - 1] + shifts[i - 1] + actions[i - 1]
             action_applied += actions[i - 1]
-            measurement = residuals[i] - action_applied + np.random.normal(0, noise)
+            if self.is_openloop:
+                # the controller is expecting an open-loop measurement
+                measurement = residuals[i] - action_applied + np.random.normal(0, noise)
+            else:
+                # the controller is expecting a closed-loop measurement
+                measurement = residuals[i] + np.random.normal(0, noise)
             if i + self.delay < truth.size:
                 actions[i + self.delay] = -self.strategy(measurement)
         
@@ -93,6 +101,7 @@ class Controller:
         return 0
 
     def strategy_stdint(self, measurement):
+        print(measurement)
         self.state = self.A.dot(self.state)
         self.state[0] += 0.1 * measurement
         return self.state[0]
@@ -100,9 +109,9 @@ class Controller:
     def strategy_kalman(self, measurement):
         # describes a 'naive Kalman' control scheme, i.e. not LQG
         assert self.kfilter.state.any(), "starting from zero state"
-        print("Prior: ", self.kfilter.state)
+        # print("Prior: ", self.kfilter.state)
         self.kfilter.update(measurement)
-        print("Updated with measurement " + str(measurement) + ": " + str(self.kfilter.state))
+        # print("Updated with measurement " + str(measurement) + ": " + str(self.kfilter.state))
         state = deepcopy(self.kfilter.state)
         self.kfilter.predict()
         state_pred = deepcopy(self.kfilter.state)
