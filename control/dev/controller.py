@@ -101,7 +101,6 @@ class Controller:
         return 0
 
     def strategy_stdint(self, measurement):
-        print(measurement)
         self.state = self.A.dot(self.state)
         self.state[0] += 0.1 * measurement
         return self.state[0]
@@ -109,9 +108,9 @@ class Controller:
     def strategy_kalman(self, measurement):
         # describes a 'naive Kalman' control scheme, i.e. not LQG
         assert self.kfilter.state.any(), "starting from zero state"
-        # print("Prior: ", self.kfilter.state)
+        print("Prior: ", self.kfilter.measure())
         self.kfilter.update(measurement)
-        # print("Updated with measurement " + str(measurement) + ": " + str(self.kfilter.state))
+        print("Updated with measurement " + str(measurement) + ": " + str(self.kfilter.measure()))
         state = deepcopy(self.kfilter.state)
         self.kfilter.predict()
         state_pred = deepcopy(self.kfilter.state)
@@ -119,7 +118,7 @@ class Controller:
             state_pred = self.kfilter.A.dot(state_pred)
         # print("Prediction: ", self.kfilter.measure(state_pred))
         # print("Current: ", self.kfilter.measure(state))
-        return self.kfilter.measure(state - state_pred)
+        return self.kfilter.measure(state_pred) - self.kfilter.measure(state)
 
     def strategy_LQR(self, measurement):
         # describes LQR control being fed optimal state estimates by a Kalman filter
