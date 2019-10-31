@@ -71,14 +71,15 @@ class Controller:
         # where you were before, plus the change due to environment, plus the control action applied
 
         print("Starting at timestep", time)
+        action_applied = 0
         for i in range(time, truth.size):
-            residuals[i] = residuals[i - 1] + shifts[i - 1] + actions[i]
-            cumulative_actions[i] = cumulative_actions[i - 1] + actions[i]
-            measurement = residuals[i] + cumulative_actions[i] + np.random.normal(0, noise)
+            residuals[i] = residuals[i - 1] + shifts[i - 1] + actions[i - 1]
+            action_applied += actions[i - 1]
+            measurement = residuals[i] - action_applied + np.random.normal(0, noise)
             if i + self.delay < truth.size:
                 actions[i + self.delay] = -self.strategy(measurement)
         
-        return residuals, cumulative_actions
+        return residuals, np.cumsum(actions)
 
     def make_state_AR(self, calibration):
         # for autoregressive strategies, makes an initial state that's the first N openloop measurements
@@ -99,15 +100,21 @@ class Controller:
     def strategy_kalman(self, measurement):
         # describes a 'naive Kalman' control scheme, i.e. not LQG
         assert self.kfilter.state.any(), "starting from zero state"
+        print("Prior: ", self.kfilter.state)
         self.kfilter.update(measurement)
+        print("Updated with measurement " + str(measurement) + ": " + str(self.kfilter.state))
         state = deepcopy(self.kfilter.state)
         self.kfilter.predict()
         state_pred = deepcopy(self.kfilter.state)
         for _ in range(self.delay - 1):
             state_pred = self.kfilter.A.dot(state_pred)
-        #print("Prediction: ", self.kfilter.measure(state_pred))
-        #print("Current: ", self.kfilter.measure(state))
-        return self.kfilter.measure(state_pred - state)
+        # print("Prediction: ", self.kfilter.measure(state_pred))
+        # print("Current: ", self.kfilter.measure(state))
+        return self.kfilter.measure(state - state_pred)
+
+    def strategy_LQR(self, measurement):
+        # describes LQR control being fed optimal state estimates by a Kalman filter
+        pass
 
 size = 2000
 N = 10
