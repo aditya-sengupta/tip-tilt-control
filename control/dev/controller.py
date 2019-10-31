@@ -56,6 +56,7 @@ class Controller:
         The control actions as a cumulative sum of individual control actions.
         '''
         residuals = np.zeros(truth.size)
+        cumulative_actions = np.zeros(truth.size)
         time = self.calibration_time
         if time is None:
             time = self.delay
@@ -71,12 +72,13 @@ class Controller:
 
         print("Starting at timestep", time)
         for i in range(time, truth.size):
-            residuals[i] = residuals[i - 1] + shifts[i - 1] - actions[i - 1]
-            measurement = residuals[i] + np.random.normal(0, noise)
+            residuals[i] = residuals[i - 1] + shifts[i - 1] + actions[i]
+            cumulative_actions[i] = cumulative_actions[i - 1] + actions[i]
+            measurement = residuals[i] + cumulative_actions[i] + np.random.normal(0, noise)
             if i + self.delay < truth.size:
-                actions[i + self.delay] = self.strategy(measurement)
+                actions[i + self.delay] = -self.strategy(measurement)
         
-        return residuals, np.cumsum(actions)
+        return residuals, cumulative_actions
 
     def make_state_AR(self, calibration):
         # for autoregressive strategies, makes an initial state that's the first N openloop measurements
