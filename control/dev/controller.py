@@ -124,7 +124,7 @@ def show_control(controller_name):
     plt.show()
 
 def keck_control(size):
-    openloop = np.load('keck_tt/OpenLoop_n0088.npy')[:size,0] * keck_normalizer
-    commands = np.load('keck_tt/Commands_n0088.npy')[:size,0] * keck_normalizer
+    openloop  = np.load('keck_tt/OpenLoop_n0088.npy')[:size,0] * keck_normalizer
+    commands  = np.load('keck_tt/Commands_n0088.npy')[:size,0] * keck_normalizer
     centroids = np.load('keck_tt/Centroid_n0088.npy')[:size,0] * keck_normalizer
     return openloop, centroids, commands
