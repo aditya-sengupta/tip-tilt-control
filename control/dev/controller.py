@@ -4,6 +4,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from aberrations import *
 from observer import *
+from copy import deepcopy
 
 rms = lambda data: np.sqrt(np.mean(data ** 2))
 
@@ -71,15 +72,14 @@ class Controller:
             self.strategy = self.strategy_stdint
             self.make_state = self.make_state_stdint
             self.A = np.array([[-0.6, -0.32, -0.08], [1, 0, 0], [0, 1, 0]])
-        elif method == 'kalman_turb': # a controller for turbulence only and without LQG: just Kalman predicting.
-            self.strategy = self.strategy_kalman_turb
+        elif method == 'kalman': # a controller for turbulence only and without LQG: just Kalman predicting.
+            self.strategy = self.strategy_kalman
             self.make_state = self.make_state_AR
 
     def make_state_AR(self, calibration):
         # for autoregressive strategies, makes an initial state that's the first N openloop measurements
         # calibration = the first STATE_SIZE measurements.
         self.state = np.flip(calibration)
-        # return STATE_SIZE + delay # + 1?
 
     def make_state_stdint(self, calibration):
         self.state = 0.1 * np.flip(calibration)
@@ -92,13 +92,19 @@ class Controller:
         self.state[0] += 0.1 * measurement
         return self.state[0]
 
-    def strategy_kalman_turb(self, measurement):
+    def strategy_kalman(self, measurement):
+        # describes a 'naive Kalman' control scheme, i.e. not LQG
+        # assumes you've already locally defined: state, A, H
+        state_pred = deepcopy(self.state)
+        for _ in range(self.delay):
+            state_pred = self.A.dot(state_pred)
+
         pass
 
 def run_stdint(size):
     stdint = Controller('stdint', 3)
     truth = np.load('keck_tt/OpenLoop_n0088.npy')[:size,0]
-    residuals, actions = control(truth, stdint)
+    residuals, actions = control(truth, stdint, noise=0)
     return truth, residuals, actions
 
 def run_baseline(size):
@@ -114,6 +120,12 @@ def show_control(truth, residuals, actions):
     plt.legend()
     plt.title("Truth and actions and residuals, error = " + str(rms(residuals)))
     plt.show()
+
+def keck_control(size):
+    openloop = np.load('keck_tt/OpenLoop_n0088.npy')[:size,0]
+    commands = np.load('keck_tt/Commands_n0088.npy')[:size,0]
+    centroids = np.load('keck_tt/Centroid_n0088.npy')[:size,0]
+    return openloop, centroids, commands
 
 if __name__ == "__main__":
     show_control(*run_stdint(1000))

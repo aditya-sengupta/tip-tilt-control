@@ -5,6 +5,7 @@ import numpy as np
 from scipy import integrate, optimize, signal, stats
 from copy import deepcopy
 from matplotlib import pyplot as plt
+from fractal_deriv import design_filt
 
 # global parameter definitions
 f_sampling = 1000  # Hz
@@ -17,6 +18,66 @@ measurement_noise = 0.06  # milliarcseconds; pulled from previous notebook
 time_id = 1  # timescale over which sysid runs. Pulled from Meimon 2010's suggested 1 Hz sysid frequency.
 times = np.arange(0, time_id, 1 / f_sampling)  # array of times to operate on
 freqs = np.linspace(0, f_sampling // 2, f_sampling // 2 + 1)  # equivalent to signal.periodogram(...)[0]
+
+class KFilter:
+    def __init__(self, state, A, P, Q, H, R):
+        self.state = state
+        self.A = A
+        self.P = P
+        self.last_P = None
+        self.Q = Q
+        self.H = H
+        self.R = R
+        self.K = None
+        self.steady_state = False
+
+    def predict(self):
+        self.state = self.A.dot(self.state)
+        self.P = self.A.dot(self.P.dot(self.A.T)) + self.Q
+
+    def set_gain(self):
+        P, H, R = self.P, self.H, self.R
+        self.K = P.dot(H.T.dot(np.linalg.inv(H.dot(P.dot(H.T)) + R)))
+
+    def update(self, measurement):
+        error = self.H.dot(self.state) - measurement
+        if not self.steady_state:
+            self.last_P = deepcopy(self.P)
+            self.set_gain()
+        self.state + self.K.dot(error) 
+        self.P - self.K.dot(self.H.dot(self.P))
+
+    def measure(self):
+        return self.H.dot(self.state)
+
+    def run(self, measurements, save_physics=False):
+        steps = len(measurements)
+        pos_r = np.zeros(steps)
+        if save_physics:
+            predictions = np.zeros(steps)
+        steady_state = False
+        
+        for k in range(steps):
+            self.update(measurements[i])
+            pos_r[k] = self.measure()
+            self.predict()
+            if save_physics:
+                predictions[k] = self.measure()
+            if not self.steady_state and np.allclose(self.last_P, self.P):
+                self.steady_state = True
+                print("steady state at step", k)
+        if save_physics:
+            return pos_r, predictions
+        return pos_r
+
+    def physics_predict(self, measurements):
+        #state = np.ones(state.size) # just to view what dynamics are like, we set a 'unity state'
+        steps = measurements.size
+        pos_r = np.zeros(steps)
+        for k in range(steps):
+            pos_r[k] = self.measure()
+            self.predict()
+        return pos_r
 
 
 def get_psd(pos):
@@ -135,19 +196,10 @@ def make_state_transition_vibe(params):
         A[2 * i + 1][2 * i] = 1
     return A
 
-def predict(A, P, Q, state):
-    return A.dot(state), A.dot(P.dot(A.T)) + Q
-
-
-def update(H, P, R, state, measurement):
-    error = measurement - H.dot(state)
-    K = P.dot(H.T.dot(np.linalg.inv(H.dot(P.dot(H.T)) + R)))
-    return state + K.dot(error), P - K.dot(H.dot(P))
-
 def make_kfilter_vibe(params, variances):
     # takes in parameters and variances from which to make a physics simulation
     # and measurements to match it against.
-    # returns state, A, P, Q, H, R for kfilter to run.
+    # returns a KFilter object.
     A = make_state_transition(params)
     STATE_SIZE = 2 * params.shape[0]
     state = np.zeros(STATE_SIZE)
@@ -157,49 +209,46 @@ def make_kfilter_vibe(params, variances):
         Q[2 * i][2 * i] = variances[i]
     R = measurement_noise * np.identity(1)
     P = np.zeros((STATE_SIZE, STATE_SIZE))
-    return state, A, P, Q, H, R
+    return KFilter(state, A, P, Q, H, R)
 
-def make_kfilter_turb(N=100):
-    pass
+def make_impulse(tt, N=100):
+    # makes an impulse response for a turbulence filter based on time-series tt data.
+    freqs, P = signal.periodogram(tt, fs=f_sampling)
+    a = 1e-6
+    size = 20
+    to_conv = [1/(2*size + 1)] * (2 * size + 1)
+    clean_psd = np.convolve(P[1:], to_conv)
+    clean_psd = clean_psd[size-1:-size]
+    c = stats.linregress(np.log10(f[np.where(f > 0.1)]), np.log10(clean_psd[np.where(f > 0.1)])).slope
+    ft = lambda b, fc, c: lambda f: b/((1j * freqs + a)**(1/3) * (1j * freqs + fc)**(-c/2 - 1/3))
+    def get_ft(b, fc, c):
+        def ft(f):
+            return b/((1j * f + a)**(1/3) * (1j * f + fc)**(-c/2 - 1/3))
+        
+        return np.vectorize(f)(freqs)
 
-def kfilter(args, measurements, physics=False):
-    state, A, P, Q, H, R = args
-    steps = len(measurements)
-    pos_r = np.zeros(steps)
-    if physics:
-        predictions = np.zeros(steps)
-    steady_state = False
-    K = np.zeros((1, state.size))
-    for k in range(steps):
-        if steady_state:
-            state = state + K.dot(measurements[k] - H.dot(state))
-        else:
-            last_P = deepcopy(P)
-            state, P = update(H, P, R, state, measurements[k])
-        pos_r[k] = H.dot(state)
-        state, P = predict(A, P, Q, state)
-        if physics:
-            predictions[k] = H.dot(state)
-        if np.allclose(last_P, P):
-            steady_state = True
-            print("steady state at step ", k)
-            K = P.dot(H.T.dot(np.linalg.inv(H.dot(P.dot(H.T)) + R)))
-    if physics:
-        return pos_r, predictions
-    return pos_r
+    get_psd = lambda ft: np.abs(ft)**2
 
-def physics_predict(args, measurements):
-    state, A, _, _, H, _ = args
-    #state = np.ones(state.size) # just to view what dynamics are like, we set a 'unity state'
-    steps = measurements.size
-    pos_r = np.zeros(steps)
-    for k in range(steps):
-        pos_r[k] = H.dot(state)
-        state = A.dot(state)
-    return pos_r
+    def cost(pars):
+        b, fc, c = pars
+        return np.mean((np.log10(get_psd(b, fc, c)) - np.log10(Pxx))**2)
 
-if __name__ == "__main__":
-    psd = get_psd(pos)
-    plt.semilogy(freqs, psd)
-    plt.ylim(1e-7, 1)
-    plt.show()
+    ft = get_ft(*optimize.minimize(cost, [1, 10, c]).x)
+    return design_filt(dt=1/f_sampling, N = 2*N, tf = ft, plot=False)
+
+def make_kfilter_turb(impulse):
+    # takes in an impulse response as generated by make_impulse, and returns a KFilter object.
+    n = impulse.size
+    state = np.zeros(n,)
+    A = np.zeros((n, n))
+    for i in range(1, n):
+        A[i][i-1] = 1
+    A[0] = np.flip(np.real(impulse))
+    # when you start the filter, make sure to start it at time n with the first n measurements identically
+    P = np.zeros((n,n))
+    Q = np.zeros((n,n))
+    Q[0][0] = 1 # arbitrary: I have no idea how to set this yet.
+    H = np.zeros((1,n))
+    H[:,0] = 1
+    R = np.array([measurement_noise**2])
+    return KFilter(state, A, P, Q, H, R)
