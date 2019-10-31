@@ -30,6 +30,7 @@ class Controller:
             self.strategy = self.strategy_kalman
             self.kfilter = args[0]
             self.calibration_time = self.kfilter.state.size
+            self.make_state = self.make_state_AR # this is sort of jank: state and kfilter's state are different.
 
     def control(self, truth, noise=noise):
         '''
@@ -97,11 +98,14 @@ class Controller:
         # describes a 'naive Kalman' control scheme, i.e. not LQG
         assert self.kfilter.state.any(), "starting from zero state"
         self.kfilter.update(measurement)
+        state = deepcopy(self.kfilter.state)
         self.kfilter.predict()
         state_pred = deepcopy(self.kfilter.state)
         for _ in range(self.delay - 1):
             state_pred = self.kfilter.A.dot(state_pred)
-        return -self.kfilter.measure(state_pred)
+        print("Prediction: ", self.kfilter.measure(state_pred))
+        print("Current: ", self.kfilter.measure(state))
+        return self.kfilter.measure(state_pred - state)
 
 size = 2000
 N = 10
