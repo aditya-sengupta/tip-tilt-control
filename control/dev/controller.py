@@ -145,12 +145,13 @@ def show_control(controller_name, openloop=truth[:steps]):
     controller = globals()[controller_name]
     residuals, actions, _ = controller.control(openloop)
     plt.figure(figsize=(10,10))
-    plt.plot(truth[:steps], label='Truth')
+    plt.plot(openloop, label='Truth')
     plt.plot(actions, label='Actions')
     plt.plot(residuals, label='Residual')
     plt.legend()
+    plt.xlabel("Time (ms)")
+    plt.ylabel("Deviation (mas)")
     plt.title("Control action from " + controller_name + ", error = " + str(rms(residuals)))
-    plt.show()
 
 def keck_control(size):
     openloop  = np.load('keck_tt/OpenLoop_n0088.npy')[:size,0] * keck_normalizer
