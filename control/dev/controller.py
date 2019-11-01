@@ -63,11 +63,11 @@ class Controller:
         time = self.calibration_time
         if time is None:
             time = self.delay
-        calibration = truth[:time] + np.random.normal(0, noise, time)
-        self.make_state(calibration)
+        openloop = np.zeros(truth.size)
+        openloop[:time] = truth[:time]
+        self.make_state(openloop[:time] + np.random.normal(0, noise, time))
         residuals[:time] = truth[:time]
         actions = np.zeros(truth.size)
-
         shifts = np.diff(truth)
         # shifts[i] is the shift from state i to state i + 1
         # i.e. position[i+1] = position[i] + shifts[i] + actions[i]
@@ -80,14 +80,15 @@ class Controller:
             action_applied += actions[i - 1]
             if self.is_openloop:
                 # the controller is expecting an open-loop measurement
-                measurement = residuals[i] - action_applied + np.random.normal(0, noise)
+                openloop[i] = residuals[i] - action_applied
             else:
                 # the controller is expecting a closed-loop measurement
-                measurement = residuals[i] + np.random.normal(0, noise)
+                openloop[i] = residuals[i]
+            measurement = openloop[i] + np.random.normal(0, noise)
             if i + self.delay < truth.size:
                 actions[i + self.delay] = -self.strategy(measurement)
         
-        return residuals, np.cumsum(actions)
+        return residuals, np.cumsum(actions), openloop
 
     def make_state_AR(self, calibration):
         # for autoregressive strategies, makes an initial state that's the first N openloop measurements
@@ -134,7 +135,7 @@ baseline = Controller('baseline')
 
 def show_control(controller_name):
     controller = globals()[controller_name]
-    residuals, actions = controller.control(truth)
+    residuals, actions, _ = controller.control(truth)
     plt.figure(figsize=(10,10))
     plt.plot(truth, label='Truth')
     plt.plot(actions, label='Actions')
