@@ -156,7 +156,7 @@ def vibe_fit_freq(psd, N=N_vib_max):
     unsorted_peaks = signal.find_peaks(psd)[0]
     freqs_energy = np.flip(np.argsort(psd)) # frequencies ordered by their energy
     for f in freqs_energy:
-        if f in unsorted_peaks:
+        if f in unsorted_peaks and f_1 <= f <= f_2:
             peaks.append(f)
 
     params = np.zeros((N, PARAMS_SIZE))
@@ -193,14 +193,14 @@ def make_kfilter_vibe(params, variances):
     # takes in parameters and variances from which to make a physics simulation
     # and measurements to match it against.
     # returns a KFilter object.
-    A = make_state_transition(params)
+    A = make_state_transition_vibe(params)
     STATE_SIZE = 2 * params.shape[0]
     state = np.zeros(STATE_SIZE)
     H = np.array([[1, 0] * (STATE_SIZE // 2)])
     Q = np.zeros((STATE_SIZE, STATE_SIZE))
     for i in range(variances.size):
         Q[2 * i][2 * i] = variances[i]
-    R = measurement_noise * np.identity(1)
+    R = measurement_noise**2 * np.identity(1)
     P = np.zeros((STATE_SIZE, STATE_SIZE))
     return KFilter(state, A, P, Q, H, R)
 
@@ -214,7 +214,7 @@ get_applied_ft = lambda b, fc, c1, c2, freqs: (get_ft(b, fc, c1, c2))(freqs)
 def make_impulse(tt, N=20, plot=True):
     # makes an impulse response for a turbulence filter based on time-series tt data.
     freqs, P = signal.periodogram(tt, fs=f_sampling)
-    size = int(tt.size/50) # rough heuristic. Just enough to get a good initial guess.
+    size = int(tt.size/100) # rough heuristic. Just enough to get a good initial guess.
     to_conv = [1/(2*size + 1)] * (2 * size + 1)
     clean_psd = np.convolve(P[1:], to_conv)
     clean_psd = clean_psd[size-1:-size]
@@ -230,7 +230,8 @@ def make_impulse(tt, N=20, plot=True):
         return np.mean((np.log10(np.abs(get_ft(b, fc, c1, c2)(freqs)**2)) - np.log10(P))**2)
 
     b, fc, c1, c2 = optimize.minimize(cost, [1, 10, c1, c2]).x
-
+    
+    #b, fc, c1, c2 = 0.1, 10, 0, 3/2
     ft = get_ft(b, fc, c1, c2)
     if plot:
         plt.loglog(freqs, P, label='true')

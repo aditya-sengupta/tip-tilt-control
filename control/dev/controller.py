@@ -11,6 +11,7 @@ noise = 0.06
 
 class Controller:
     def __init__(self, method, *args, STATE_SIZE=0, calibration_time=None):
+        self.refresh_time = None
         if method == 'stdint':
             self.STATE_SIZE = 3
             self.calibration_time = 3
@@ -31,8 +32,11 @@ class Controller:
         elif method == 'kalman': # a controller for turbulence only and without LQG: just Kalman predicting.
             self.strategy = self.strategy_kalman
             self.kfilter = args[0]
-            self.calibration_time = self.kfilter.state.size
-            self.make_state = self.make_state_AR # this is sort of jank: state and kfilter's state are different.
+            if calibration_time is None:
+                self.calibration_time = self.kfilter.state.size
+            else:
+                self.calibration_time = calibration_time
+            self.make_state = self.make_state_AR # this is sort of jank: state and kfilter's state are different, so this doesn't really matter.
             self.is_openloop = True
 
     def control(self, truth, noise=noise):
@@ -108,7 +112,7 @@ class Controller:
 
     def strategy_kalman(self, measurement):
         # describes a 'naive Kalman' control scheme, i.e. not LQG
-        assert self.kfilter.state.any(), "starting from zero state"
+        # assert self.kfilter.state.any(), "starting from zero state"
         # print("Prior: ", self.kfilter.measure())
         self.kfilter.update(measurement)
         # print("Updated with measurement " + str(measurement) + ": " + str(self.kfilter.measure()))
@@ -125,19 +129,21 @@ class Controller:
         # describes LQR control being fed optimal state estimates by a Kalman filter
         pass
 
-size = 2000
-steps = 2000
+size = 4000
+steps = 4000
 N = 4
 
 keck_normalizer = 0.6 * (600e-9 / (2 * np.pi)) *  206265000
-truth = np.load('./turbulence.npy')[:size,0]# * keck_normalizer
+truth = np.load('./combined.npy')[:size,0]
+_, psd = signal.periodogram(truth + np.random.normal(0, noise, truth.size), fs=f_sampling)
 kalman = Controller('kalman', make_kfilter_turb(make_impulse(truth[:size//2], N=N), truth[:N] + np.random.normal(0, noise, (N,))))
+vibe = Controller('kalman', make_kfilter_vibe(*vibe_fit_freq(noise_filter(psd), N=2)), calibration_time=200)
 stdint = Controller('stdint')
 baseline = Controller('baseline')
 
-def show_control(controller_name):
+def show_control(controller_name, openloop=truth[:steps]):
     controller = globals()[controller_name]
-    residuals, actions, _ = controller.control(truth[:steps])
+    residuals, actions, _ = controller.control(openloop)
     plt.figure(figsize=(10,10))
     plt.plot(truth[:steps], label='Truth')
     plt.plot(actions, label='Actions')
