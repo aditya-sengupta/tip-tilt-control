@@ -257,4 +257,4 @@ def make_kfilter_turb(impulse, calibration):
     H = np.zeros((1,n))
     H[:,0] = 1
     R = np.array([measurement_noise**2])
-    return KFilter(state, A, P, Q*1000, H, R)
+    return KFilter(state, A, P, Q, H, R)

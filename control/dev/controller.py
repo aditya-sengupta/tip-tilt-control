@@ -109,24 +109,25 @@ class Controller:
     def strategy_kalman(self, measurement):
         # describes a 'naive Kalman' control scheme, i.e. not LQG
         assert self.kfilter.state.any(), "starting from zero state"
-        print("Prior: ", self.kfilter.measure())
+        # print("Prior: ", self.kfilter.measure())
         self.kfilter.update(measurement)
-        print("Updated with measurement " + str(measurement) + ": " + str(self.kfilter.measure()))
+        # print("Updated with measurement " + str(measurement) + ": " + str(self.kfilter.measure()))
         state = deepcopy(self.kfilter.state)
         self.kfilter.predict()
         state_pred = deepcopy(self.kfilter.state)
         for _ in range(self.delay - 1):
             state_pred = self.kfilter.A.dot(state_pred)
-        # print("Prediction: ", self.kfilter.measure(state_pred))
-        # print("Current: ", self.kfilter.measure(state))
-        return self.kfilter.measure(state_pred) - self.kfilter.measure(state)
+        print("Current: ", self.kfilter.measure(state))
+        print("Prediction: ", self.kfilter.measure(state_pred))
+        return -self.kfilter.measure(state) + self.kfilter.measure(state_pred)
 
     def strategy_LQR(self, measurement):
         # describes LQR control being fed optimal state estimates by a Kalman filter
         pass
 
 size = 2000
-N = 10
+steps = 300
+N = 100
 keck_normalizer = 0.6 * (600e-9 / (2 * np.pi)) *  206265000
 truth = np.load('./turbulence.npy')[:size,0]# * keck_normalizer
 kalman = Controller('kalman', make_kfilter_turb(make_impulse(truth[:size//2], N=N), truth[:N] + np.random.normal(0, noise, (N,))))
@@ -135,9 +136,9 @@ baseline = Controller('baseline')
 
 def show_control(controller_name):
     controller = globals()[controller_name]
-    residuals, actions, _ = controller.control(truth)
+    residuals, actions, _ = controller.control(truth[:steps])
     plt.figure(figsize=(10,10))
-    plt.plot(truth, label='Truth')
+    plt.plot(truth[:steps], label='Truth')
     plt.plot(actions, label='Actions')
     plt.plot(residuals, label='Residual')
     plt.legend()
