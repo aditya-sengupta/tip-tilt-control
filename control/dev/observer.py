@@ -230,15 +230,18 @@ def make_impulse(tt, N=20, plot=True):
         return np.mean((np.log10(np.abs(get_ft(b, fc, c1, c2)(freqs)**2)) - np.log10(P))**2)
 
     b, fc, c1, c2 = optimize.minimize(cost, [1, 10, c1, c2]).x
-    
+    print(b, fc, c1, c2)
     #b, fc, c1, c2 = 0.1, 10, 0, 3/2
     ft = get_ft(b, fc, c1, c2)
     if plot:
         plt.loglog(freqs, P, label='true')
-        plt.loglog(freqs, clean_psd, label='cleaned')
+        #plt.loglog(freqs, clean_psd, label='cleaned')
         plt.loglog(freqs, np.abs(get_applied_ft(b, fc, c1, c2, freqs))**2, label='fit')
+        plt.xlabel("Frequency (Hz)")
+        plt.ylabel(r"Power spectral density (mas$^2$/Hz)")
         plt.legend()
         plt.ylim(1e-7)
+        plt.savefig('./truepowerlaw.svg')
     impulse = design_filt(dt=1/f_sampling, N=2*N, tf = ft, plot=plot)
     return impulse
 
