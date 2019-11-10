@@ -72,6 +72,9 @@ class KFilter:
             self.predict()
         return pos_r
 
+    def get_params(self):
+        return self.state, self.A, self.P, self.Q, self.H, self.R
+
 
 def get_psd(pos):
     return signal.periodogram(pos, f_sampling)[1]
@@ -219,7 +222,7 @@ def make_impulse(tt, N=20, plot=True):
     clean_psd = np.convolve(P[1:], to_conv)
     clean_psd = clean_psd[size-1:-size]
 
-    c1 = stats.linregress(np.log10(freqs[np.where(freqs < 10)][1:]), np.log10(clean_psd[np.where(freqs < 10)][1:])).slope
+    c1 = stats.linregress(np.log10(freqs[np.where(freqs < 10)][1:]), np.log10(clean_psd[np.where(freqs < 10)][1:])).slopef
     c2 = stats.linregress(np.log10(freqs[np.where(freqs > 10)]), np.log10(clean_psd[np.where(freqs > 10)])).slope
 
     ft = lambda b, fc: lambda f: b/((1j * freqs + a)**(np.abs(c1)) * (1j * freqs + fc)**(np.abs(c2)))

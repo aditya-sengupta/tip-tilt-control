@@ -15,9 +15,6 @@ f_1 = f_sampling / 60  # lowest possible frequency of a vibration mode
 f_2 = f_sampling / 3  # highest possible frequency of a vibration mode
 f_w = f_sampling / 3  # frequency above which measurement noise dominates
 measurement_noise = 0.06  # milliarcseconds; pulled from previous notebook
-time_id = 5  # timescale over which sysid runs. Pulled from Meimon 2010's suggested 1 Hz sysid frequency.
-times = np.arange(0, time_id, 1 / f_sampling)  # array of times to operate on
-num_steps = int(time_id * f_sampling)
 D = 10.95
 r0 = 16.5e-2   
 pupil_size = 16
@@ -42,7 +39,7 @@ def make_vibe_params(N=N_vib_app):
     return [f(N) for f in [make_vib_amps, make_vib_freqs, make_vib_damping, make_vib_phase]]
 
 
-def make_1D_vibe_data(vib_params=None, times=times, N=N_vib_app):
+def make_1D_vibe_data(steps, vib_params=None, N=N_vib_app):
     # adjusted so that each 'pos' mode is the solution to the DE
     # x'' + 2k w0 x' + w0^2 x = 0 with w0 = 2pi*f/sqrt(1-k^2) 
     # (chosen so that vib_freqs matches up with the PSD freq)
@@ -52,13 +49,14 @@ def make_1D_vibe_data(vib_params=None, times=times, N=N_vib_app):
         vib_amps, vib_freqs, vib_damping, vib_phase = vib_params
         N = vib_freqs.size
 
+    times = np.linspace(0, steps / f_sampling, steps)
     pos = sum([vib_amps[i] * np.cos(2 * np.pi * vib_freqs[i] * times - vib_phase[i])
                * np.exp(-(vib_damping[i]/(1 - vib_damping[i]**2)) * 2 * np.pi * vib_freqs[i] * times) 
                for i in range(N)])
 
     return pos
 
-def make_2D_vibe_data(times=times, N=N_vib_app):
+def make_2D_vibe_data(steps, N=N_vib_app):
     # adjusted so that each 'pos' mode is the solution to the DE
     # x'' + 2k w0 x' + w0^2 x = 0 with w0 = 2pi*f/sqrt(1-k^2) 
     # (chosen so that vib_freqs matches up with the PSD freq)
@@ -66,7 +64,7 @@ def make_2D_vibe_data(times=times, N=N_vib_app):
     params_y = deepcopy(params_x)
     params_y[0] = make_vib_amps(N)
     params_y[3] = make_vib_phase(N)
-    return np.vstack((make_1D_vibe_data(params_x, times, N).T, make_1D_vibe_data(params_y, times, N).T)).T
+    return np.vstack((make_1D_vibe_data(steps, params_x, N).T, make_1D_vibe_data(steps, params_y, N).T)).T
 
 
 def make_noisy_data(pos, noise=measurement_noise):
@@ -86,16 +84,16 @@ def make_specific_tt(weights):
     tt_wf = Wavefront(aperture * np.exp(1j * np.pi * sum([w * z for w, z in zip(weights, tt)])), wavelength)
     return tt_wf
 
-def make_atm_data(wf=None):
+def make_atm_data(steps, wf=None):
     conversion = (wavelength / D) * 206265000 / focal_samples
     if wf is None:
         wf = Wavefront(aperture, wavelength) # can induce a specified TT here if desired
 
-    tt_cms = np.zeros((f_sampling * time_id, 2))
-    for n in range(f_sampling * time_id):
+    tt_cms = np.zeros((steps, 2))
+    for n in range(steps):
         wf = Wavefront(aperture, wavelength)
         for layer in layers:
-            layer.evolve_until(times[n])
+            layer.evolve_until(n / f_sampling)
             wf = layer(wf)
         tt_cms[n] = center_of_mass(prop(wf).intensity)
 
