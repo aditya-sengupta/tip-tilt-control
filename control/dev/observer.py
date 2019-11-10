@@ -205,9 +205,9 @@ def make_kfilter_vibe(params, variances):
     return KFilter(state, A, P, Q, H, R)
 
 def get_ft(b, fc, c1, c2):
-        def ft(f):
-            return b/((1j * f + a)**(np.abs(c1)) * (1j * f + fc)**(np.abs(c2)))
-        return np.vectorize(ft)
+    def ft(f):
+        return b/((1j * f + a)**(np.abs(c1)) * (1j * f + fc)**(np.abs(c2)))
+    return np.vectorize(ft)
 
 get_applied_ft = lambda b, fc, c1, c2, freqs: (get_ft(b, fc, c1, c2))(freqs)
 
@@ -218,18 +218,16 @@ def make_impulse(tt, N=20, plot=True):
     to_conv = [1/(2*size + 1)] * (2 * size + 1)
     clean_psd = np.convolve(P[1:], to_conv)
     clean_psd = clean_psd[size-1:-size]
-    #print(freqs)
-    #print(freqs[np.where(freqs < 10)][1:])
-    #print(clean_psd[np.where(freqs < 10)][1:])
+
     c1 = stats.linregress(np.log10(freqs[np.where(freqs < 10)][1:]), np.log10(clean_psd[np.where(freqs < 10)][1:])).slope
     c2 = stats.linregress(np.log10(freqs[np.where(freqs > 10)]), np.log10(clean_psd[np.where(freqs > 10)])).slope
 
-    ft = lambda b, fc, c1, c2: lambda f: b/((1j * freqs + a)**(np.abs(c1)) * (1j * freqs + fc)**(np.abs(c2)))
+    ft = lambda b, fc: lambda f: b/((1j * freqs + a)**(np.abs(c1)) * (1j * freqs + fc)**(np.abs(c2)))
     def cost(pars):
-        b, fc, c1, c2 = pars
+        b, fc = pars
         return np.mean((np.log10(np.abs(get_ft(b, fc, c1, c2)(freqs)**2)) - np.log10(P))**2)
 
-    b, fc, c1, c2 = optimize.minimize(cost, [1, 10, c1, c2]).x
+    b, fc = optimize.minimize(cost, [1, 10]).x
     print(b, fc, c1, c2)
     #b, fc, c1, c2 = 0.1, 10, 0, 3/2
     ft = get_ft(b, fc, c1, c2)
