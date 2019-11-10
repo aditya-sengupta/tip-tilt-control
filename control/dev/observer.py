@@ -2,7 +2,7 @@
 # Operates on a single mode at a time.
 
 import numpy as np
-from scipy import integrate, optimize, signal, stats
+from scipy import integrate, optimize, signal, stats, linalg
 from copy import deepcopy
 from matplotlib import pyplot as plt
 from fractal_deriv import design_filt
@@ -21,27 +21,39 @@ freqs = np.linspace(0, f_sampling // 2, f_sampling // 2 + 1)  # equivalent to si
 a = 1e-6 # the pole location for the f^(-2/3) powerlaw
 
 class KFilter:
-    def __init__(self, state, A, P, Q, H, R):
+    def __init__(self, state, A, Q, H, R):
         self.state = state
         self.A = A
-        self.P = P
-        self.Q = Q
+        P = np.zeros((state.size, state.size))
         self.H = H
-        self.R = R
-        self.K = None
+        iters = 0
+        while True:
+            last_P = deepcopy(P)
+            P = A.dot(P.dot(A.T)) + Q
+            self.K = P.dot(H.T.dot(np.linalg.inv(H.dot(P.dot(H.T)) + R)))
+            P -= self.K.dot(H.dot(P))
+            if np.allclose(P, last_P):
+                break
+            iters += 1
+            
+        print("Took %d iterations to get steady-state covariance." % iters)
+        self.iters = iters
+
+    def __add__(self, other):
+        # there's probably a more compact way to do this.
+        self.state = np.hstack((self.state, other.state))
+        self.A = linalg.block_diag(self.A, other.A)
+        self.K = linalg.block_diag(self.K, other.K)
+        self.H = linalg.block_diag(self.H, other.H)
+        self.iters = max(self.iters, other.iters)
+        return self
 
     def predict(self):
         self.state = self.A.dot(self.state)
-        self.P = self.A.dot(self.P.dot(self.A.T)) + self.Q
-
-    def set_gain(self):
-        self.K = self.P.dot(self.H.T.dot(np.linalg.inv(self.H.dot(self.P.dot(self.H.T)) + self.R)))
 
     def update(self, measurement):
         error = measurement - self.measure()
-        self.set_gain()
         self.state = self.state + self.K.dot(error) 
-        self.P = self.P - self.K.dot(self.H.dot(self.P))
 
     def measure(self, state=None):
         if state is not None:
@@ -73,8 +85,7 @@ class KFilter:
         return pos_r
 
     def get_params(self):
-        return self.state, self.A, self.P, self.Q, self.H, self.R
-
+        return self.state, self.A, self.H, self.K
 
 def get_psd(pos):
     return signal.periodogram(pos, f_sampling)[1]
@@ -204,8 +215,7 @@ def make_kfilter_vibe(params, variances):
     for i in range(variances.size):
         Q[2 * i][2 * i] = variances[i]
     R = measurement_noise**2 * np.identity(1)
-    P = np.zeros((STATE_SIZE, STATE_SIZE))
-    return KFilter(state, A, P, Q, H, R)
+    return KFilter(state, A, Q, H, R)
 
 def get_ft(b, fc, c1, c2):
     def ft(f):
@@ -214,36 +224,10 @@ def get_ft(b, fc, c1, c2):
 
 get_applied_ft = lambda b, fc, c1, c2, freqs: (get_ft(b, fc, c1, c2))(freqs)
 
-def make_impulse(tt, N=20, plot=True):
+def make_impulse_from_tt(tt, N=20, plot=True):
     # makes an impulse response for a turbulence filter based on time-series tt data.
-    freqs, P = signal.periodogram(tt, fs=f_sampling)
-    size = int(tt.size/100) # rough heuristic. Just enough to get a good initial guess.
-    to_conv = [1/(2*size + 1)] * (2 * size + 1)
-    clean_psd = np.convolve(P[1:], to_conv)
-    clean_psd = clean_psd[size-1:-size]
-
-    c1 = stats.linregress(np.log10(freqs[np.where(freqs < 10)][1:]), np.log10(clean_psd[np.where(freqs < 10)][1:])).slopef
-    c2 = stats.linregress(np.log10(freqs[np.where(freqs > 10)]), np.log10(clean_psd[np.where(freqs > 10)])).slope
-
-    ft = lambda b, fc: lambda f: b/((1j * freqs + a)**(np.abs(c1)) * (1j * freqs + fc)**(np.abs(c2)))
-    def cost(pars):
-        b, fc = pars
-        return np.mean((np.log10(np.abs(get_ft(b, fc, c1, c2)(freqs)**2)) - np.log10(P))**2)
-
-    b, fc = optimize.minimize(cost, [1, 10]).x
-    print(b, fc, c1, c2)
-    #b, fc, c1, c2 = 0.1, 10, 0, 3/2
-    ft = get_ft(b, fc, c1, c2)
-    if plot:
-        plt.loglog(freqs, P, label='true')
-        #plt.loglog(freqs, clean_psd, label='cleaned')
-        plt.loglog(freqs, np.abs(get_applied_ft(b, fc, c1, c2, freqs))**2, label='fit')
-        plt.xlabel("Frequency (Hz)")
-        plt.ylabel(r"Power spectral density (mas$^2$/Hz)")
-        plt.legend()
-        plt.ylim(1e-7)
-        plt.savefig('./truepowerlaw.svg')
-    impulse = design_filt(dt=1/f_sampling, N=2*N, tf = ft, plot=plot)
+    _, P = signal.periodogram(tt, fs=f_sampling)
+    impulse = design_filt(dt=1/f_sampling, N=2*N, tf = P, plot=plot)
     return impulse
 
 def make_kfilter_turb(impulse, calibration):
@@ -262,4 +246,4 @@ def make_kfilter_turb(impulse, calibration):
     H = np.zeros((1,n))
     H[:,0] = 1
     R = np.array([measurement_noise**2])
-    return KFilter(state, A, P, Q * 1e-2, H, R)
+    return KFilter(state, A, Q * 1e-2, H, R)

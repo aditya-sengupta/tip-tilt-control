@@ -107,7 +107,7 @@ class Controller:
 
     def strategy_stdint(self, measurement):
         self.state = self.A.dot(self.state)
-        self.state[0] += 0.1 * measurement
+        self.state[0] += 0.3 * measurement
         return self.state[0]
 
     def strategy_kalman(self, measurement):

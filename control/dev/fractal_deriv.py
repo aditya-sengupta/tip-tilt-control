@@ -67,6 +67,7 @@ def design_filt(dt=1, N=1024, fc=0.1, a=1e-6, tf=None, plot=True,oplot=False):
         fc - wind clearing frequency in Hz, float (defaults to 0.1 Hz)
         a - the location of the "-1/3" pole, a small number on the real axis near the origin, float (defaults to 1e-6 Hz)
         tf - the transfer function: a function that takes in 'f' and returns the corresponding point on the FT.
+             or just the PSD that we want to invert.
         plot - if true, produce a plot of the impulse response and the power spectrum (default is True)
         oplot - if true, prodece a plot, but overplot it on curves from a prior call to design_filt (default is False)
 
@@ -79,7 +80,10 @@ def design_filt(dt=1, N=1024, fc=0.1, a=1e-6, tf=None, plot=True,oplot=False):
     f = (np.arange(N)-N//2)*df
     s = i*f
     if tf is not None:
-        xF = np.vectorize(tf)(f)
+        if callable(tf):
+            xF = np.vectorize(tf)(f)
+        else:
+            xF = tf
     else:
         xF = 1/((s+a)**(1/3)*(s+fc)**(3/2))
     # this is flipped, so that it tracks instead of controlling, and maybe 1/3 instead of 3/2 for an 1/f^2 powerlaw

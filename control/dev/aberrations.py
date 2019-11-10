@@ -84,7 +84,7 @@ def make_specific_tt(weights):
     tt_wf = Wavefront(aperture * np.exp(1j * np.pi * sum([w * z for w, z in zip(weights, tt)])), wavelength)
     return tt_wf
 
-def make_atm_data(steps, wf=None):
+def make_atm_data(steps, wf=None, layers=layers, zerotime=0):
     conversion = (wavelength / D) * 206265000 / focal_samples
     if wf is None:
         wf = Wavefront(aperture, wavelength) # can induce a specified TT here if desired
@@ -93,7 +93,7 @@ def make_atm_data(steps, wf=None):
     for n in range(steps):
         wf = Wavefront(aperture, wavelength)
         for layer in layers:
-            layer.evolve_until(n / f_sampling)
+            layer.evolve_until(n / f_sampling + zerotime)
             wf = layer(wf)
         tt_cms[n] = center_of_mass(prop(wf).intensity)
 
