@@ -41,7 +41,7 @@ class Controller:
 
     def control(self, truth, noise=noise):
         '''
-        Simulates the general control problem.
+        Simulates the general tip-tilt control problem.
 
         Parameters:
 
@@ -61,6 +61,9 @@ class Controller:
 
         actions - ndarray
         The control actions as a cumulative sum of individual control actions.
+
+        openloop - ndarray
+        The inputs (without measurement error) that the control strategy takes in.
         '''
         residuals = np.zeros(truth.size)
         cumulative_actions = np.zeros(truth.size)
@@ -73,14 +76,15 @@ class Controller:
         residuals[:time] = truth[:time]
         actions = np.zeros(truth.size)
         shifts = np.diff(truth)
+
         # shifts[i] is the shift from state i to state i + 1
-        # i.e. position[i+1] = position[i] + shifts[i] + actions[i]
+        # i.e. position[i+1] = truth[i+1] actions[i]
         # where you were before, plus the change due to environment, plus the control action applied
 
         print("Starting at timestep", time)
         action_applied = 0
         for i in range(time, truth.size):
-            residuals[i] = residuals[i - 1] + shifts[i - 1] + actions[i - 1]
+            residuals[i] = residuals[i-1] + shifts[i-1] + actions[i-1]
             action_applied += actions[i - 1]
             if self.is_openloop:
                 # the controller is expecting an open-loop measurement
@@ -112,16 +116,13 @@ class Controller:
 
     def strategy_kalman(self, measurement):
         # describes a 'naive Kalman' control scheme, i.e. not LQG
-        # assert self.kfilter.state.any(), "starting from zero state"
-        # print("Prior: ", self.kfilter.measure())
         self.kfilter.update(measurement)
-        # print("Updated with measurement " + str(measurement) + ": " + str(self.kfilter.measure()))
         state = deepcopy(self.kfilter.state)
         self.kfilter.predict()
         state_pred = deepcopy(self.kfilter.state)
-        for _ in range(self.delay):
+        for _ in range(self.delay - 1):
             state_pred = self.kfilter.A.dot(state_pred)
-        return self.kfilter.measure() - self.kfilter.H.dot(state_pred)
+        return self.kfilter.H.dot(state - state_pred)
 
     def strategy_LQR(self, measurement):
         # describes LQR control being fed optimal state estimates by a Kalman filter
