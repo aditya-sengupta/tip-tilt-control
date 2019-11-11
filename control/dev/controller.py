@@ -119,11 +119,9 @@ class Controller:
         state = deepcopy(self.kfilter.state)
         self.kfilter.predict()
         state_pred = deepcopy(self.kfilter.state)
-        for _ in range(self.delay - 1):
+        for _ in range(self.delay):
             state_pred = self.kfilter.A.dot(state_pred)
-        # print("Current: ", self.kfilter.measure(state))
-        # print("Prediction: ", self.kfilter.measure(state_pred))
-        return self.kfilter.measure(state) - self.kfilter.measure(state_pred)
+        return self.kfilter.measure() - self.kfilter.H.dot(state_pred)
 
     def strategy_LQR(self, measurement):
         # describes LQR control being fed optimal state estimates by a Kalman filter
