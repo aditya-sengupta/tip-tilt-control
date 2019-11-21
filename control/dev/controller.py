@@ -63,7 +63,7 @@ class Controller:
         The control actions as a cumulative sum of individual control actions.
 
         openloop - ndarray
-        The inputs (without measurement error) that the control strategy takes in.
+        The pseudo-open-loops.
         '''
         residuals = np.zeros(truth.size)
         cumulative_actions = np.zeros(truth.size)
@@ -71,14 +71,14 @@ class Controller:
         if time is None:
             time = self.delay
         openloop = np.zeros(truth.size)
-        openloop[:time] = truth[:time]
-        self.make_state(openloop[:time] + np.random.normal(0, noise, time))
+        openloop[:time] = truth[:time] + np.random.normal(0, noise, time)
+        self.make_state(openloop[:time])
         residuals[:time] = truth[:time]
         actions = np.zeros(truth.size)
         shifts = np.diff(truth)
 
         # shifts[i] is the shift from state i to state i + 1
-        # i.e. position[i+1] = truth[i+1] actions[i]
+        # i.e. position[i+1] = truth[i+1] + actions[i]
         # where you were before, plus the change due to environment, plus the control action applied
 
         print("Starting at timestep", time)
@@ -86,13 +86,14 @@ class Controller:
         for i in range(time, truth.size):
             residuals[i] = residuals[i-1] + shifts[i-1] + actions[i-1]
             action_applied += actions[i - 1]
+            openloop[i] = residuals[i] - action_applied
             if self.is_openloop:
                 # the controller is expecting an open-loop measurement
-                openloop[i] = residuals[i] - action_applied
+                measurement = openloop[i]
             else:
                 # the controller is expecting a closed-loop measurement
-                openloop[i] = residuals[i]
-            measurement = openloop[i] + np.random.normal(0, noise)
+                measurement = residuals[i]
+            measurement += np.random.normal(0, noise)
             if i + self.delay < truth.size:
                 actions[i + self.delay] = -self.strategy(measurement)
         
@@ -111,7 +112,7 @@ class Controller:
 
     def strategy_stdint(self, measurement):
         self.state = self.A.dot(self.state)
-        self.state[0] += 0.3 * measurement
+        self.state[0] += 0.1 * measurement
         return self.state[0]
 
     def strategy_kalman(self, measurement):

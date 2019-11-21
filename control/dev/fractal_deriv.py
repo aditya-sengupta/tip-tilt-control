@@ -76,17 +76,18 @@ def design_filt(dt=1, N=1024, fc=0.1, a=1e-6, tf=None, plot=True,oplot=False):
             as a moving-average (MA) model using the values in x as the coefficients.
     '''
     i = 1j
-    df = 1/(N*dt)
-    f = (np.arange(N)-N//2)*df
-    s = i*f
-    if tf is not None:
-        if callable(tf):
-            xF = np.vectorize(tf)(f)
-        else:
-            xF = tf
+    if tf is not None and not callable(tf):
+        xF = tf
+        m = len(tf) * 2
+        f = (np.arange(m)-m//2)/(m * dt)
     else:
+        f = (np.arange(N)-N//2)/(N * dt)
+        s = i*f
         xF = 1/((s+a)**(1/3)*(s+fc)**(3/2))
     # this is flipped, so that it tracks instead of controlling, and maybe 1/3 instead of 3/2 for an 1/f^2 powerlaw
+    if callable(tf):
+        xF = np.vectorize(tf)(f)
+
     xF = np.fft.fftshift(xF)
     f = np.fft.fftshift(f)
     x = np.fft.ifft(xF)
@@ -111,7 +112,7 @@ def design_filt(dt=1, N=1024, fc=0.1, a=1e-6, tf=None, plot=True,oplot=False):
         plt.ylabel('Power Spectrum')
         plt.xlabel('frequency, Hz')
     globals().update(locals())
-    return x
+    return np.real(x) / sum(np.real(x))
 
 def filt(a,dt=1,u=None,N=1024,plot=True,oplot=False):
     '''filter the time series u by the filter a, defined
