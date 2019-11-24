@@ -83,7 +83,7 @@ def design_filt(dt=1, N=1024, fc=0.1, a=1e-6, tf=None, plot=True,oplot=False):
     else:
         f = (np.arange(N)-N//2)/(N * dt)
         s = i*f
-        xF = 1/((s+a)**(1/3)*(s+fc)**(3/2))
+        xF = ((s+a)**(1/3)*(s+fc)**(3/2))
     # this is flipped, so that it tracks instead of controlling, and maybe 1/3 instead of 3/2 for an 1/f^2 powerlaw
     if callable(tf):
         xF = np.vectorize(tf)(f)
