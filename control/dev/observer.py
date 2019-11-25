@@ -241,7 +241,6 @@ def make_kfilter_turb(impulse):
     for i in range(1, n):
         A[i][i-1] = 1
     A[0] = (np.real(impulse)/sum(np.real(impulse)))
-    # when you start the filter, make sure to start it at time n with the first n measurements identically
     Q = np.zeros((n,n))
     Q[0][0] = 1 # arbitrary: I have no idea how to set this yet.
     H = np.zeros((1,n))
