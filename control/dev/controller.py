@@ -125,8 +125,8 @@ class Controller:
             state_pred = self.kfilter.A.dot(state_pred)
         return self.kfilter.H.dot(state - state_pred)
 
-    def strategy_LQR(self, measurement):
-        # describes LQR control being fed optimal state estimates by a Kalman filter
+    def strategy_MPC(self, measurement):
+        # describes model predictive control being fed optimal state estimates by a Kalman filter
         pass
 
 def show_control(controller_name, openloop):

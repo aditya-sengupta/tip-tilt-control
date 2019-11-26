@@ -21,9 +21,13 @@ freqs = np.linspace(0, f_sampling // 2, f_sampling // 2 + 1)  # equivalent to si
 a = 1e-6 # the pole location for the f^(-2/3) powerlaw
 
 class KFilter:
-    def __init__(self, *args, from_sum=False):
+    def __init__(self, *args, from_sum=False, has_input=False):
         if not from_sum:
-            state, A, Q, H, R = args
+            if not has_input:
+                state, A, Q, H, R = args
+            else:
+                state, A, B, Q, H, R = args
+                self.B = B
             self.state = state
             self.A = A
             P = np.zeros((state.size, state.size))
@@ -42,25 +46,42 @@ class KFilter:
             self.iters = iters
 
         else:
-            self.state, self.A, self.K, self.H, self.iters = args
+            if not has_input:
+                self.state, self.A, self.K, self.H, self.iters = args
+            else:
+                self.state, self.A, self.B, self.K, self.H, self.iters = args
 
     def __str__(self):
         return "Kalman filter with state size " + str(self.state.size) + " and measurement size " + str(self.H.shape[0])
 
     def __add__(self, other):
+        has_input = False
         if self.state.size == 0:
             return other
         elif other.state.size == 0:
             return self
+        if hasattr(self, "B"):
+            if hasattr(other, "B"):
+                B = linalg.block_diag(self.B, other.B).T
+            else:
+                B = linalg.block_diag(self.B, np.zeros(other.state.size,)).T
+            has_input = True
+        elif hasattr(other, "B"):
+            B = linalg.block_diag(np.zeros(self.state.size,), other.B).T
+            has_input = True
         state = np.hstack((self.state, other.state))
         A = linalg.block_diag(self.A, other.A)
-        K = np.vstack((self.K, other.K))
-        H = np.hstack((self.H, other.H))
+        K = np.vstack((self.K, other.K)) # should also be block_diag?
+        H = linalg.block_diag(self.H, other.H)
         iters = max(self.iters, other.iters)
+        if has_input:
+            return KFilter(state, A, B, K, H, iters, from_sum=True, has_input=has_input)
         return KFilter(state, A, K, H, iters, from_sum=True)
 
-    def predict(self):
+    def predict(self, ext=None):
         self.state = self.A.dot(self.state)
+        if hasattr(self, "B"):
+            self.state += self.B.dot(ext).flatten() # ew
 
     def update(self, measurement):
         error = measurement - self.measure()
@@ -69,7 +90,12 @@ class KFilter:
     def measure(self):
         return self.H.dot(self.state)
 
-    def run(self, measurements, save_physics=False):
+    def run(self, *args, save_physics=False):
+        if not hasattr(self, "B"):
+            measurements = args
+            inputs = measurements
+        else:
+            measurements, inputs = args
         steps = len(measurements)
         pos_r = np.zeros(steps)
         if save_physics:
@@ -78,7 +104,7 @@ class KFilter:
         for k in range(steps):
             self.update(measurements[k])
             pos_r[k] = self.measure()
-            self.predict()
+            self.predict(inputs[k])
             if save_physics:
                 predictions[k] = self.measure() # off by one?
         if save_physics:
