@@ -85,17 +85,18 @@ class KFilter:
 
     def update(self, measurement):
         error = measurement - self.measure()
-        self.state = self.state + self.K.dot(error) 
+        self.state = self.state + self.K.dot(error).flatten() # whyyy 
 
     def measure(self):
         return self.H.dot(self.state)
 
     def run(self, *args, save_physics=False):
         if not hasattr(self, "B"):
-            measurements = args
+            measurements = args[0]
             inputs = measurements
         else:
             measurements, inputs = args
+
         steps = len(measurements)
         pos_r = np.zeros(steps)
         if save_physics:
