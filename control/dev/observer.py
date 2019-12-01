@@ -106,7 +106,7 @@ class KFilter:
             pos_r[k] = self.measure()
             self.predict(inputs[k])
             if save_physics:
-                predictions[k] = self.measure() # off by one?
+                predictions[k] = self.measure()
         if save_physics:
             return pos_r, predictions
         return pos_r
@@ -124,7 +124,7 @@ class KFilter:
 
 def get_psd(pos):
     return signal.periodogram(pos, f_sampling)[1]
-    # return np.fft.fftshift(np.fft.fft(pos))[pos.size//2-1:] if you want the FFTR
+    # return np.abs(np.fft.fftshift(np.fft.fft(pos))[pos.size//2-1:][1:]) ** 2
 
 
 def noise_filter(psd):
