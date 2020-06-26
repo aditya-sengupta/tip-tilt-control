@@ -1,4 +1,4 @@
-[submodule "control/hcipy"]
-	path = control/hcipy
+[submodule "hcipy"]
+	path = hcipy
 	url = https://github.com/ehpor/hcipy
 	ignore = untracked

@@ -1,0 +1,716 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Created with matplotlib (https://matplotlib.org/) -->
+<svg height="511.2pt" version="1.1" viewBox="0 0 720 511.2" width="720pt" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <style type="text/css">
+*{stroke-linecap:butt;stroke-linejoin:round;}
+  </style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 511.2 
+L 720 511.2 
+L 720 0 
+L 0 0 
+z
+" style="fill:none;"/>
+  </g>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 172.188 454.968 
+L 565.812 454.968 
+L 565.812 61.344 
+L 172.188 61.344 
+z
+" style="fill:none;"/>
+   </g>
+   <g clip-path="url(#pe4daaf5839)">
+    <image height="394.56" id="image6978671600" transform="scale(1 -1)translate(0 -394.56)" width="394.56" x="172.188" xlink:href="data:image/png;base64,
+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" y="-60.408"/>
+   </g>
+   <g id="patch_3">
+    <path clip-path="url(#pe4daaf5839)" d="M 172.188 454.968 
+L 565.812 454.968 
+L 565.812 61.344 
+L 172.188 61.344 
+z
+" style="fill:none;"/>
+   </g>
+   <g id="matplotlib.axis_1">
+    <g id="xtick_1">
+     <g id="line2d_1">
+      <defs>
+       <path d="M 0 0 
+L 0 3.5 
+" id="mfff6a033a4" style="stroke:#000000;stroke-width:0.8;"/>
+      </defs>
+      <g>
+       <use style="stroke:#000000;stroke-width:0.8;" x="172.188" xlink:href="#mfff6a033a4" y="454.968"/>
+      </g>
+     </g>
+     <g id="text_1">
+      <!-- −4 -->
+      <defs>
+       <path d="M 10.84375 25.296875 
+L 10.84375 32.515625 
+L 68.65625 32.515625 
+L 68.65625 25.296875 
+z
+" id="LucidaGrande-8722"/>
+       <path d="M 37.640625 0 
+L 37.640625 20.453125 
+L 5.125 20.453125 
+L 5.125 27.734375 
+L 37.640625 72.265625 
+L 46.6875 72.265625 
+L 46.6875 28.328125 
+L 56.34375 28.328125 
+L 56.34375 20.453125 
+L 46.6875 20.453125 
+L 46.6875 0 
+z
+M 14.546875 28.328125 
+L 38.28125 28.328125 
+L 38.28125 60.453125 
+z
+" id="LucidaGrande-52"/>
+      </defs>
+      <g transform="translate(163.862425 470.958673)scale(0.11662 -0.11662)">
+       <use xlink:href="#LucidaGrande-8722"/>
+       <use x="79.541016" xlink:href="#LucidaGrande-52"/>
+      </g>
+     </g>
+    </g>
+    <g id="xtick_2">
+     <g id="line2d_2">
+      <g>
+       <use style="stroke:#000000;stroke-width:0.8;" x="221.778425" xlink:href="#mfff6a033a4" y="454.968"/>
+      </g>
+     </g>
+     <g id="text_2">
+      <!-- −3 -->
+      <defs>
+       <path d="M 10.15625 0.53125 
+L 10.15625 9.515625 
+Q 20.515625 5.421875 26.46875 5.421875 
+Q 33.34375 5.421875 37.671875 9.453125 
+Q 42 13.484375 42 19.875 
+Q 42 35.109375 20.65625 35.109375 
+L 16.84375 35.109375 
+L 16.84375 41.609375 
+L 20.21875 41.65625 
+Q 40.234375 41.65625 40.234375 55.765625 
+Q 40.234375 66.84375 27.046875 66.84375 
+Q 19.828125 66.84375 11.140625 62.796875 
+L 11.140625 71.1875 
+Q 19.671875 74.078125 27.734375 74.078125 
+Q 49.90625 74.078125 49.90625 57.328125 
+Q 49.90625 44.578125 34.8125 39.15625 
+Q 52.296875 35.109375 52.296875 20.015625 
+Q 52.296875 9.8125 45.546875 4 
+Q 38.8125 -1.8125 27.046875 -1.8125 
+Q 20.359375 -1.8125 10.15625 0.53125 
+z
+" id="LucidaGrande-51"/>
+      </defs>
+      <g transform="translate(213.452851 470.958673)scale(0.11662 -0.11662)">
+       <use xlink:href="#LucidaGrande-8722"/>
+       <use x="79.541016" xlink:href="#LucidaGrande-51"/>
+      </g>
+     </g>
+    </g>
+    <g id="xtick_3">
+     <g id="line2d_3">
+      <g>
+       <use style="stroke:#000000;stroke-width:0.8;" x="271.36885" xlink:href="#mfff6a033a4" y="454.968"/>
+      </g>
+     </g>
+     <g id="text_3">
+      <!-- −2 -->
+      <defs>
+       <path d="M 8.296875 0 
+L 8.296875 8.453125 
+Q 12.5 18.265625 25.296875 29.828125 
+L 30.8125 34.765625 
+Q 41.453125 44.390625 41.453125 53.859375 
+Q 41.453125 59.90625 37.8125 63.375 
+Q 34.1875 66.84375 27.828125 66.84375 
+Q 20.3125 66.84375 10.109375 61.03125 
+L 10.109375 69.53125 
+Q 19.734375 74.078125 29.203125 74.078125 
+Q 39.359375 74.078125 45.5 68.609375 
+Q 51.65625 63.140625 51.65625 54.109375 
+Q 51.65625 47.609375 48.546875 42.578125 
+Q 45.453125 37.546875 37.015625 30.375 
+L 33.296875 27.203125 
+Q 21.734375 17.390625 19.921875 8.453125 
+L 51.3125 8.453125 
+L 51.3125 0 
+z
+" id="LucidaGrande-50"/>
+      </defs>
+      <g transform="translate(263.043276 470.958673)scale(0.11662 -0.11662)">
+       <use xlink:href="#LucidaGrande-8722"/>
+       <use x="79.541016" xlink:href="#LucidaGrande-50"/>
+      </g>
+     </g>
+    </g>
+    <g id="xtick_4">
+     <g id="line2d_4">
+      <g>
+       <use style="stroke:#000000;stroke-width:0.8;" x="320.959276" xlink:href="#mfff6a033a4" y="454.968"/>
+      </g>
+     </g>
+     <g id="text_4">
+      <!-- −1 -->
+      <defs>
+       <path d="M 15.046875 0 
+L 15.046875 7.234375 
+L 29.5 7.234375 
+L 29.5 64.265625 
+L 15.046875 60.640625 
+L 15.046875 68.0625 
+L 39.15625 74.078125 
+L 39.15625 7.234375 
+L 53.609375 7.234375 
+L 53.609375 0 
+z
+" id="LucidaGrande-49"/>
+      </defs>
+      <g transform="translate(312.633701 470.958673)scale(0.11662 -0.11662)">
+       <use xlink:href="#LucidaGrande-8722"/>
+       <use x="79.541016" xlink:href="#LucidaGrande-49"/>
+      </g>
+     </g>
+    </g>
+    <g id="xtick_5">
+     <g id="line2d_5">
+      <g>
+       <use style="stroke:#000000;stroke-width:0.8;" x="370.549701" xlink:href="#mfff6a033a4" y="454.968"/>
+      </g>
+     </g>
+     <g id="text_5">
+      <!-- 0 -->
+      <defs>
+       <path d="M 31.34375 -1.8125 
+Q 20.171875 -1.8125 13.25 8.703125 
+Q 6.34375 19.234375 6.34375 36.1875 
+Q 6.34375 53.265625 13.296875 63.671875 
+Q 20.265625 74.078125 31.640625 74.078125 
+Q 43.015625 74.078125 49.96875 63.671875 
+Q 56.9375 53.265625 56.9375 36.328125 
+Q 56.9375 18.953125 49.96875 8.5625 
+Q 43.015625 -1.8125 31.34375 -1.8125 
+z
+M 31.453125 5.421875 
+Q 46.734375 5.421875 46.734375 36.46875 
+Q 46.734375 66.84375 31.640625 66.84375 
+Q 16.609375 66.84375 16.609375 36.1875 
+Q 16.609375 5.421875 31.453125 5.421875 
+z
+" id="LucidaGrande-48"/>
+      </defs>
+      <g transform="translate(366.862504 470.958673)scale(0.11662 -0.11662)">
+       <use xlink:href="#LucidaGrande-48"/>
+      </g>
+     </g>
+    </g>
+    <g id="xtick_6">
+     <g id="line2d_6">
+      <g>
+       <use style="stroke:#000000;stroke-width:0.8;" x="420.140126" xlink:href="#mfff6a033a4" y="454.968"/>
+      </g>
+     </g>
+     <g id="text_6">
+      <!-- 1 -->
+      <g transform="translate(416.45293 470.958673)scale(0.11662 -0.11662)">
+       <use xlink:href="#LucidaGrande-49"/>
+      </g>
+     </g>
+    </g>
+    <g id="xtick_7">
+     <g id="line2d_7">
+      <g>
+       <use style="stroke:#000000;stroke-width:0.8;" x="469.730551" xlink:href="#mfff6a033a4" y="454.968"/>
+      </g>
+     </g>
+     <g id="text_7">
+      <!-- 2 -->
+      <g transform="translate(466.043355 470.958673)scale(0.11662 -0.11662)">
+       <use xlink:href="#LucidaGrande-50"/>
+      </g>
+     </g>
+    </g>
+    <g id="xtick_8">
+     <g id="line2d_8">
+      <g>
+       <use style="stroke:#000000;stroke-width:0.8;" x="519.320976" xlink:href="#mfff6a033a4" y="454.968"/>
+      </g>
+     </g>
+     <g id="text_8">
+      <!-- 3 -->
+      <g transform="translate(515.63378 470.958673)scale(0.11662 -0.11662)">
+       <use xlink:href="#LucidaGrande-51"/>
+      </g>
+     </g>
+    </g>
+    <g id="text_9">
+     <!-- Deviation in x ($\lambda$/D) -->
+     <defs>
+      <path d="M 9.328125 0 
+L 9.328125 72.265625 
+L 33.34375 72.265625 
+Q 44.09375 72.265625 50.703125 69.875 
+Q 57.328125 67.484375 62.15625 61.765625 
+Q 69.828125 52.6875 69.828125 37.84375 
+Q 69.828125 19.828125 60.296875 9.90625 
+Q 50.78125 0 33.5 0 
+z
+M 19.578125 7.671875 
+L 32.71875 7.671875 
+Q 46.78125 7.671875 52.640625 15.234375 
+Q 58.9375 23.296875 58.9375 36.859375 
+Q 58.9375 49.609375 52.734375 56.890625 
+Q 48.96875 61.328125 43.75 62.953125 
+Q 38.53125 64.59375 28.03125 64.59375 
+L 19.578125 64.59375 
+z
+" id="LucidaGrande-68"/>
+      <path d="M 48.484375 1.703125 
+Q 38.8125 -1.21875 31.9375 -1.21875 
+Q 20.21875 -1.21875 12.8125 6.5625 
+Q 5.421875 14.359375 5.421875 26.765625 
+Q 5.421875 38.8125 11.9375 46.53125 
+Q 18.453125 54.25 28.609375 54.25 
+Q 38.234375 54.25 43.484375 47.40625 
+Q 48.734375 40.578125 48.734375 27.984375 
+L 48.6875 25 
+L 15.234375 25 
+Q 17.328125 6.109375 33.734375 6.109375 
+Q 39.75 6.109375 48.484375 9.328125 
+z
+M 15.671875 32.234375 
+L 39.0625 32.234375 
+Q 39.0625 47.015625 28.03125 47.015625 
+Q 16.9375 47.015625 15.671875 32.234375 
+z
+" id="LucidaGrande-101"/>
+      <path d="M 20.609375 0 
+L 0.875 53.03125 
+L 10.5 53.03125 
+L 25.921875 11.765625 
+L 42.1875 53.03125 
+L 51.171875 53.03125 
+L 30.21875 0 
+z
+" id="LucidaGrande-118"/>
+      <path d="M 9.625 0 
+L 9.625 53.03125 
+L 19.234375 53.03125 
+L 19.234375 0 
+z
+M 9.625 62.640625 
+L 9.625 72.265625 
+L 19.234375 72.265625 
+L 19.234375 62.640625 
+z
+" id="LucidaGrande-105"/>
+      <path d="M 36.96875 6.734375 
+Q 28.328125 -1.21875 20.3125 -1.21875 
+Q 13.71875 -1.21875 9.375 2.90625 
+Q 5.03125 7.03125 5.03125 13.328125 
+Q 5.03125 22.015625 12.328125 26.671875 
+Q 19.625 31.34375 33.25 31.34375 
+L 35.546875 31.34375 
+L 35.546875 37.75 
+Q 35.546875 46.96875 26.078125 46.96875 
+Q 18.453125 46.96875 9.625 42.28125 
+L 9.625 50.25 
+Q 19.34375 54.203125 27.828125 54.203125 
+Q 36.71875 54.203125 40.9375 50.1875 
+Q 45.171875 46.1875 45.171875 37.75 
+L 45.171875 13.71875 
+Q 45.171875 5.46875 50.25 5.46875 
+Q 50.875 5.46875 52.09375 5.671875 
+L 52.78125 0.34375 
+Q 49.515625 -1.21875 45.5625 -1.21875 
+Q 38.8125 -1.21875 36.96875 6.734375 
+z
+M 35.546875 11.96875 
+L 35.546875 25.6875 
+L 32.328125 25.78125 
+Q 24.421875 25.78125 19.53125 22.78125 
+Q 14.65625 19.78125 14.65625 14.890625 
+Q 14.65625 11.421875 17.09375 9.03125 
+Q 19.53125 6.640625 23.046875 6.640625 
+Q 29.046875 6.640625 35.546875 11.96875 
+z
+" id="LucidaGrande-97"/>
+      <path d="M 25.53125 -1.21875 
+Q 18.21875 -1.21875 14.109375 2.96875 
+Q 10.015625 7.171875 10.015625 14.65625 
+L 10.015625 45.796875 
+L 3.375 45.796875 
+L 3.375 53.03125 
+L 10.015625 53.03125 
+L 10.015625 62.640625 
+L 19.625 63.578125 
+L 19.625 53.03125 
+L 33.5 53.03125 
+L 33.5 45.796875 
+L 19.625 45.796875 
+L 19.625 16.40625 
+Q 19.625 6 28.609375 6 
+Q 30.515625 6 33.25 6.640625 
+L 33.25 0 
+Q 28.8125 -1.21875 25.53125 -1.21875 
+z
+" id="LucidaGrande-116"/>
+      <path d="M 30.375 -1.21875 
+Q 19 -1.21875 12.203125 6.328125 
+Q 5.421875 13.875 5.421875 26.515625 
+Q 5.421875 39.3125 12.234375 46.75 
+Q 19.046875 54.203125 30.71875 54.203125 
+Q 42.390625 54.203125 49.1875 46.75 
+Q 56 39.3125 56 26.609375 
+Q 56 13.625 49.15625 6.203125 
+Q 42.328125 -1.21875 30.375 -1.21875 
+z
+M 30.515625 6 
+Q 45.796875 6 45.796875 26.609375 
+Q 45.796875 46.96875 30.71875 46.96875 
+Q 15.671875 46.96875 15.671875 26.515625 
+Q 15.671875 6 30.515625 6 
+z
+" id="LucidaGrande-111"/>
+      <path d="M 9.625 0 
+L 9.625 53.03125 
+L 19.234375 53.03125 
+L 19.234375 43.0625 
+Q 26.859375 54.203125 37.890625 54.203125 
+Q 44.78125 54.203125 48.875 49.828125 
+Q 52.984375 45.453125 52.984375 38.09375 
+L 52.984375 0 
+L 43.359375 0 
+L 43.359375 34.96875 
+Q 43.359375 40.875 41.625 43.390625 
+Q 39.890625 45.90625 35.890625 45.90625 
+Q 27.046875 45.90625 19.234375 34.328125 
+L 19.234375 0 
+z
+" id="LucidaGrande-110"/>
+      <path id="LucidaGrande-32"/>
+      <path d="M 4.296875 0 
+L 24.46875 27.390625 
+L 4.890625 53.03125 
+L 16.3125 53.03125 
+L 31.78125 32.625 
+L 45.796875 53.03125 
+L 55.171875 53.03125 
+L 36.8125 26.125 
+L 56.78125 0 
+L 45.359375 0 
+L 29.390625 21 
+L 13.96875 0 
+z
+" id="LucidaGrande-120"/>
+      <path d="M 28.90625 -7.8125 
+L 28.90625 -14.453125 
+Q 18.359375 -7.28125 12.171875 5.046875 
+Q 6 17.390625 6 31.34375 
+Q 6 45.265625 12.171875 57.59375 
+Q 18.359375 69.921875 28.90625 77.09375 
+L 28.90625 70.453125 
+Q 21.734375 62.640625 18.671875 53.65625 
+Q 15.625 44.671875 15.625 31.34375 
+Q 15.625 17.96875 18.671875 8.984375 
+Q 21.734375 0 28.90625 -7.8125 
+z
+" id="LucidaGrande-40"/>
+      <path d="M 36.71875 67.4375 
+L 48.828125 0 
+L 39.3125 0 
+L 31.84375 40.4375 
+L 5.125 0 
+L -4.390625 0 
+L 29.734375 52.4375 
+L 28.03125 62.109375 
+Q 26.953125 68.265625 21.734375 68.265625 
+L 17.046875 68.265625 
+L 18.5 75.984375 
+L 24.21875 75.875 
+Q 35.203125 75.734375 36.71875 67.4375 
+z
+" id="DejaVuSans-Oblique-955"/>
+      <path d="M 9.421875 -14.453125 
+L 35.453125 72.265625 
+L 43.015625 72.265625 
+L 17 -14.453125 
+z
+" id="LucidaGrande-47"/>
+      <path d="M 3.609375 -7.8125 
+L 3.609375 -14.453125 
+Q 14.15625 -7.28125 20.328125 5.046875 
+Q 26.515625 17.390625 26.515625 31.34375 
+Q 26.515625 45.265625 20.328125 57.59375 
+Q 14.15625 69.921875 3.609375 77.09375 
+L 3.609375 70.453125 
+Q 10.796875 62.640625 13.84375 53.65625 
+Q 16.890625 44.671875 16.890625 31.34375 
+Q 16.890625 17.96875 13.84375 8.984375 
+Q 10.796875 0 3.609375 -7.8125 
+z
+" id="LucidaGrande-41"/>
+     </defs>
+     <g transform="translate(302.08 488.000378)scale(0.14 -0.14)">
+      <use transform="translate(0 0.90625)" xlink:href="#LucidaGrande-68"/>
+      <use transform="translate(74.902344 0.90625)" xlink:href="#LucidaGrande-101"/>
+      <use transform="translate(130.615234 0.90625)" xlink:href="#LucidaGrande-118"/>
+      <use transform="translate(182.373047 0.90625)" xlink:href="#LucidaGrande-105"/>
+      <use transform="translate(211.279297 0.90625)" xlink:href="#LucidaGrande-97"/>
+      <use transform="translate(266.503906 0.90625)" xlink:href="#LucidaGrande-116"/>
+      <use transform="translate(303.90625 0.90625)" xlink:href="#LucidaGrande-105"/>
+      <use transform="translate(332.8125 0.90625)" xlink:href="#LucidaGrande-111"/>
+      <use transform="translate(394.238281 0.90625)" xlink:href="#LucidaGrande-110"/>
+      <use transform="translate(456.298828 0.90625)" xlink:href="#LucidaGrande-32"/>
+      <use transform="translate(487.939453 0.90625)" xlink:href="#LucidaGrande-105"/>
+      <use transform="translate(516.845703 0.90625)" xlink:href="#LucidaGrande-110"/>
+      <use transform="translate(578.90625 0.90625)" xlink:href="#LucidaGrande-32"/>
+      <use transform="translate(610.546875 0.90625)" xlink:href="#LucidaGrande-120"/>
+      <use transform="translate(671.875 0.90625)" xlink:href="#LucidaGrande-32"/>
+      <use transform="translate(703.515625 0.90625)" xlink:href="#LucidaGrande-40"/>
+      <use transform="translate(736.035156 0.90625)" xlink:href="#DejaVuSans-Oblique-955"/>
+      <use transform="translate(795.214844 0.90625)" xlink:href="#LucidaGrande-47"/>
+      <use transform="translate(847.65625 0.90625)" xlink:href="#LucidaGrande-68"/>
+      <use transform="translate(922.558594 0.90625)" xlink:href="#LucidaGrande-41"/>
+     </g>
+    </g>
+    <g id="text_10">
+     <!-- 1e−6 -->
+     <defs>
+      <path d="M 17.1875 37.453125 
+Q 24.078125 46.390625 34.515625 46.390625 
+Q 44 46.390625 50.03125 40.109375 
+Q 56.0625 33.84375 56.0625 24.03125 
+Q 56.0625 12.75 49.296875 5.46875 
+Q 42.53125 -1.8125 32.125 -1.8125 
+Q 20.171875 -1.8125 13.421875 7.8125 
+Q 6.6875 17.4375 6.6875 34.515625 
+Q 6.6875 53.328125 14.421875 63.71875 
+Q 22.171875 74.125 36.234375 74.125 
+Q 42.671875 74.125 52.34375 71.390625 
+L 52.34375 62.984375 
+Q 42.140625 66.890625 35.640625 66.890625 
+Q 17.1875 66.890625 17.1875 37.453125 
+z
+M 46.390625 21.875 
+Q 46.390625 30.078125 42.703125 34.765625 
+Q 39.015625 39.453125 32.46875 39.453125 
+Q 26.375 39.453125 21.96875 35.34375 
+Q 17.578125 31.25 17.578125 25.484375 
+Q 17.578125 16.40625 21.75 10.90625 
+Q 25.921875 5.421875 32.8125 5.421875 
+Q 39.015625 5.421875 42.703125 9.890625 
+Q 46.390625 14.359375 46.390625 21.875 
+z
+" id="LucidaGrande-54"/>
+     </defs>
+     <g transform="translate(535.288537 485.197926)scale(0.11662 -0.11662)">
+      <use xlink:href="#LucidaGrande-49"/>
+      <use x="63.232422" xlink:href="#LucidaGrande-101"/>
+      <use x="118.945312" xlink:href="#LucidaGrande-8722"/>
+      <use x="198.486328" xlink:href="#LucidaGrande-54"/>
+     </g>
+    </g>
+   </g>
+   <g id="matplotlib.axis_2">
+    <g id="ytick_1">
+     <g id="line2d_9">
+      <defs>
+       <path d="M 0 0 
+L -3.5 0 
+" id="m78ed3f1632" style="stroke:#000000;stroke-width:0.8;"/>
+      </defs>
+      <g>
+       <use style="stroke:#000000;stroke-width:0.8;" x="172.188" xlink:href="#m78ed3f1632" y="454.968"/>
+      </g>
+     </g>
+     <g id="text_11">
+      <!-- −4 -->
+      <g transform="translate(148.536851 459.463337)scale(0.11662 -0.11662)">
+       <use xlink:href="#LucidaGrande-8722"/>
+       <use x="79.541016" xlink:href="#LucidaGrande-52"/>
+      </g>
+     </g>
+    </g>
+    <g id="ytick_2">
+     <g id="line2d_10">
+      <g>
+       <use style="stroke:#000000;stroke-width:0.8;" x="172.188" xlink:href="#m78ed3f1632" y="405.377575"/>
+      </g>
+     </g>
+     <g id="text_12">
+      <!-- −3 -->
+      <g transform="translate(148.536851 409.872911)scale(0.11662 -0.11662)">
+       <use xlink:href="#LucidaGrande-8722"/>
+       <use x="79.541016" xlink:href="#LucidaGrande-51"/>
+      </g>
+     </g>
+    </g>
+    <g id="ytick_3">
+     <g id="line2d_11">
+      <g>
+       <use style="stroke:#000000;stroke-width:0.8;" x="172.188" xlink:href="#m78ed3f1632" y="355.78715"/>
+      </g>
+     </g>
+     <g id="text_13">
+      <!-- −2 -->
+      <g transform="translate(148.536851 360.282486)scale(0.11662 -0.11662)">
+       <use xlink:href="#LucidaGrande-8722"/>
+       <use x="79.541016" xlink:href="#LucidaGrande-50"/>
+      </g>
+     </g>
+    </g>
+    <g id="ytick_4">
+     <g id="line2d_12">
+      <g>
+       <use style="stroke:#000000;stroke-width:0.8;" x="172.188" xlink:href="#m78ed3f1632" y="306.196724"/>
+      </g>
+     </g>
+     <g id="text_14">
+      <!-- −1 -->
+      <g transform="translate(148.536851 310.692061)scale(0.11662 -0.11662)">
+       <use xlink:href="#LucidaGrande-8722"/>
+       <use x="79.541016" xlink:href="#LucidaGrande-49"/>
+      </g>
+     </g>
+    </g>
+    <g id="ytick_5">
+     <g id="line2d_13">
+      <g>
+       <use style="stroke:#000000;stroke-width:0.8;" x="172.188" xlink:href="#m78ed3f1632" y="256.606299"/>
+      </g>
+     </g>
+     <g id="text_15">
+      <!-- 0 -->
+      <g transform="translate(157.813607 261.101636)scale(0.11662 -0.11662)">
+       <use xlink:href="#LucidaGrande-48"/>
+      </g>
+     </g>
+    </g>
+    <g id="ytick_6">
+     <g id="line2d_14">
+      <g>
+       <use style="stroke:#000000;stroke-width:0.8;" x="172.188" xlink:href="#m78ed3f1632" y="207.015874"/>
+      </g>
+     </g>
+     <g id="text_16">
+      <!-- 1 -->
+      <g transform="translate(157.813607 211.511211)scale(0.11662 -0.11662)">
+       <use xlink:href="#LucidaGrande-49"/>
+      </g>
+     </g>
+    </g>
+    <g id="ytick_7">
+     <g id="line2d_15">
+      <g>
+       <use style="stroke:#000000;stroke-width:0.8;" x="172.188" xlink:href="#m78ed3f1632" y="157.425449"/>
+      </g>
+     </g>
+     <g id="text_17">
+      <!-- 2 -->
+      <g transform="translate(157.813607 161.920785)scale(0.11662 -0.11662)">
+       <use xlink:href="#LucidaGrande-50"/>
+      </g>
+     </g>
+    </g>
+    <g id="ytick_8">
+     <g id="line2d_16">
+      <g>
+       <use style="stroke:#000000;stroke-width:0.8;" x="172.188" xlink:href="#m78ed3f1632" y="107.835024"/>
+      </g>
+     </g>
+     <g id="text_18">
+      <!-- 3 -->
+      <g transform="translate(157.813607 112.33036)scale(0.11662 -0.11662)">
+       <use xlink:href="#LucidaGrande-51"/>
+      </g>
+     </g>
+    </g>
+    <g id="text_19">
+     <!-- Deviation in y ($\lambda$/D) -->
+     <defs>
+      <path d="M 12.703125 -19.28125 
+L 21.296875 0 
+L 0.78125 53.03125 
+L 11.1875 53.03125 
+L 26.375 13.09375 
+L 42.578125 53.03125 
+L 51.65625 53.03125 
+L 22.703125 -19.28125 
+z
+" id="LucidaGrande-121"/>
+     </defs>
+     <g transform="translate(141.736851 324.376)rotate(-90)scale(0.14 -0.14)">
+      <use transform="translate(0 0.90625)" xlink:href="#LucidaGrande-68"/>
+      <use transform="translate(74.902344 0.90625)" xlink:href="#LucidaGrande-101"/>
+      <use transform="translate(130.615234 0.90625)" xlink:href="#LucidaGrande-118"/>
+      <use transform="translate(182.373047 0.90625)" xlink:href="#LucidaGrande-105"/>
+      <use transform="translate(211.279297 0.90625)" xlink:href="#LucidaGrande-97"/>
+      <use transform="translate(266.503906 0.90625)" xlink:href="#LucidaGrande-116"/>
+      <use transform="translate(303.90625 0.90625)" xlink:href="#LucidaGrande-105"/>
+      <use transform="translate(332.8125 0.90625)" xlink:href="#LucidaGrande-111"/>
+      <use transform="translate(394.238281 0.90625)" xlink:href="#LucidaGrande-110"/>
+      <use transform="translate(456.298828 0.90625)" xlink:href="#LucidaGrande-32"/>
+      <use transform="translate(487.939453 0.90625)" xlink:href="#LucidaGrande-105"/>
+      <use transform="translate(516.845703 0.90625)" xlink:href="#LucidaGrande-110"/>
+      <use transform="translate(578.90625 0.90625)" xlink:href="#LucidaGrande-32"/>
+      <use transform="translate(610.546875 0.90625)" xlink:href="#LucidaGrande-121"/>
+      <use transform="translate(662.792969 0.90625)" xlink:href="#LucidaGrande-32"/>
+      <use transform="translate(694.433594 0.90625)" xlink:href="#LucidaGrande-40"/>
+      <use transform="translate(726.953125 0.90625)" xlink:href="#DejaVuSans-Oblique-955"/>
+      <use transform="translate(786.132812 0.90625)" xlink:href="#LucidaGrande-47"/>
+      <use transform="translate(838.574219 0.90625)" xlink:href="#LucidaGrande-68"/>
+      <use transform="translate(913.476562 0.90625)" xlink:href="#LucidaGrande-41"/>
+     </g>
+    </g>
+    <g id="text_20">
+     <!-- 1e−6 -->
+     <g transform="translate(172.188 58.344)scale(0.11662 -0.11662)">
+      <use xlink:href="#LucidaGrande-49"/>
+      <use x="63.232422" xlink:href="#LucidaGrande-101"/>
+      <use x="118.945312" xlink:href="#LucidaGrande-8722"/>
+      <use x="198.486328" xlink:href="#LucidaGrande-54"/>
+     </g>
+    </g>
+   </g>
+   <g id="patch_4">
+    <path d="M 172.188 454.968 
+L 172.188 61.344 
+" style="fill:none;stroke:#000000;stroke-linecap:square;stroke-linejoin:miter;stroke-width:0.8;"/>
+   </g>
+   <g id="patch_5">
+    <path d="M 565.812 454.968 
+L 565.812 61.344 
+" style="fill:none;stroke:#000000;stroke-linecap:square;stroke-linejoin:miter;stroke-width:0.8;"/>
+   </g>
+   <g id="patch_6">
+    <path d="M 172.188 454.968 
+L 565.812 454.968 
+" style="fill:none;stroke:#000000;stroke-linecap:square;stroke-linejoin:miter;stroke-width:0.8;"/>
+   </g>
+   <g id="patch_7">
+    <path d="M 172.188 61.344 
+L 565.812 61.344 
+" style="fill:none;stroke:#000000;stroke-linecap:square;stroke-linejoin:miter;stroke-width:0.8;"/>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="pe4daaf5839">
+   <rect height="393.624" width="393.624" x="172.188" y="61.344"/>
+  </clipPath>
+ </defs>
+</svg>
