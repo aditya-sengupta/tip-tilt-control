@@ -1,3 +1,0 @@
-Filter Design for Tip/Tilt Correction
-
-Correcting the tip and tilt modes of optical aberrations can mitigate the majority of distortions in adaptive optics systems. I aim to greatly improve tip/tilt filtering and correction for the Keck telescopes. This can be optimally done using a Kalman filter with a physics model conditioned by the expected tip/tilt power spectrum and vibration peaks. The effects of measurement noise, loop delays, and the response of the control hardware are also considered.
